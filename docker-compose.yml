@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hrmanager_app
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+    networks:
+      - hrmanager
+
+  nginx:
+    image: nginx:alpine
+    container_name: hrmanager_nginx
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - ./:/var/www
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+    networks:
+      - hrmanager
+
+  mysql:
+    image: mysql:8.0
+    container_name: hrmanager_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: hrmanager
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_PASSWORD: password
+      MYSQL_USER: user
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - hrmanager
+
+  redis:
+    image: redis:7-alpine
+    container_name: hrmanager_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - hrmanager
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: hrmanager_mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - hrmanager
+
+volumes:
+  mysql_data:
+
+networks:
+  hrmanager:
+    driver: bridge
