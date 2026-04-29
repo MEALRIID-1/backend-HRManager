@@ -1,0 +1,115 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>
+endobj
+4 0 obj
+<< /Length 6233 >>\nstream\nBT
+/F1 10 Tf
+14 TL
+50 800 Td
+(Rapport des congés) Tj
+T*
+(Généré le 29/04/2026 12:49) Tj
+T*
+(Période: 2026-03-29 -> 2026-04-29) Tj
+T*
+() Tj
+T*
+(Id | Employe nom | Employe email | Manager nom | Type | Date debut | Date fin | Nombre jours | Etat | Raison | Created at) Tj
+T*
+(------------------------------------------------------------------------------------------) Tj
+T*
+(32 | Employe Demo | employe.demo@hrmanager.com | Manager Test | conge_annuel | 2026-05-29 | 2026-06-05 | 8 | soumis | Vacances d'été | 2026-04-29 12:09:26) Tj
+T*
+(33 | Employe Demo | employe.demo@hrmanager.com | Manager Test | maladie | 2026-04-27 | 2026-04-30 | 4 | valide_manager | Arrêt maladie | 2026-04-29 12:09:26) Tj
+T*
+(34 | Employe Demo | employe.demo@hrmanager.com | Manager Test | exceptionnel | 2026-05-09 | 2026-05-11 | 3 | refuse_manager | Événement familial | 2026-04-29 12:09:26) Tj
+T*
+(35 | Employe Demo | employe.demo@hrmanager.com | Manager Test | conge_annuel | 2026-06-29 | 2026-07-04 | 6 | annule | Voyage annulé | 2026-04-29 12:09:26) Tj
+T*
+(27 | Employe Demo | employe.demo@hrmanager.com | Manager Test | conge_annuel | 2026-05-29 | 2026-06-05 | 8 | soumis | Vacances d'été | 2026-04-29 12:00:45) Tj
+T*
+(28 | Employe Demo | employe.demo@hrmanager.com | Manager Test | maladie | 2026-04-27 | 2026-04-30 | 4 | valide_manager | Arrêt maladie | 2026-04-29 12:00:45) Tj
+T*
+(29 | Employe Demo | employe.demo@hrmanager.com | Manager Test | exceptionnel | 2026-05-09 | 2026-05-11 | 3 | refuse_manager | Événement familial | 2026-04-29 12:00:45) Tj
+T*
+(30 | Employe Demo | employe.demo@hrmanager.com | Manager Test | conge_annuel | 2026-06-29 | 2026-07-04 | 6 | annule | Voyage annulé | 2026-04-29 12:00:45) Tj
+T*
+(25 | Employe Demo | employe.demo@hrmanager.com | Manager Test | conge_annuel | 2026-08-27 | 2026-09-01 | 6 | brouillon |  | 2026-04-29 11:48:18) Tj
+T*
+(21 | Employe Demo | employe.demo@hrmanager.com | Manager Test | conge_annuel | 2026-05-29 | 2026-06-05 | 8 | soumis | Vacances d'été | 2026-04-29 11:47:01) Tj
+T*
+(22 | Employe Demo | employe.demo@hrmanager.com | Manager Test | maladie | 2026-04-27 | 2026-04-30 | 4 | valide_manager | Arrêt maladie | 2026-04-29 11:47:01) Tj
+T*
+(23 | Employe Demo | employe.demo@hrmanager.com | Manager Test | exceptionnel | 2026-05-09 | 2026-05-11 | 3 | refuse_manager | Événement familial | 2026-04-29 11:47:01) Tj
+T*
+(24 | Employe Demo | employe.demo@hrmanager.com | Manager Test | conge_annuel | 2026-06-29 | 2026-07-04 | 6 | annule | Voyage annulé | 2026-04-29 11:47:01) Tj
+T*
+(17 | Employe Demo | employe.demo@hrmanager.com | Manager Test | conge_annuel | 2026-05-29 | 2026-06-05 | 8 | soumis | Vacances d'été | 2026-04-29 11:46:41) Tj
+T*
+(18 | Employe Demo | employe.demo@hrmanager.com | Manager Test | maladie | 2026-04-27 | 2026-04-30 | 4 | valide_manager | Arrêt maladie | 2026-04-29 11:46:41) Tj
+T*
+(19 | Employe Demo | employe.demo@hrmanager.com | Manager Test | exceptionnel | 2026-05-09 | 2026-05-11 | 3 | refuse_manager | Événement familial | 2026-04-29 11:46:41) Tj
+T*
+(13 | Employe Demo | employe.demo@hrmanager.com | Manager Test | conge_annuel | 2026-05-29 | 2026-06-05 | 8 | soumis | Vacances d'été | 2026-04-29 11:46:10) Tj
+T*
+(14 | Employe Demo | employe.demo@hrmanager.com | Manager Test | maladie | 2026-04-27 | 2026-04-30 | 4 | valide_manager | Arrêt maladie | 2026-04-29 11:46:10) Tj
+T*
+(15 | Employe Demo | employe.demo@hrmanager.com | Manager Test | exceptionnel | 2026-05-09 | 2026-05-11 | 3 | refuse_manager | Événement familial | 2026-04-29 11:46:10) Tj
+T*
+(11 | Employe Demo | employe.demo@hrmanager.com | Manager Test | exceptionnel | 2026-05-09 | 2026-05-11 | 3 | refuse_manager | Événement familial | 2026-04-29 11:45:11) Tj
+T*
+(9 | Employe Demo | employe.demo@hrmanager.com | Manager Test | conge_annuel | 2026-05-29 | 2026-06-05 | 8 | soumis | Vacances d'été | 2026-04-29 11:45:10) Tj
+T*
+(10 | Employe Demo | employe.demo@hrmanager.com | Manager Test | maladie | 2026-04-27 | 2026-04-30 | 4 | valide_manager | Arrêt maladie | 2026-04-29 11:45:10) Tj
+T*
+(5 | Employe Demo | employe.demo@hrmanager.com | Manager Test | conge_annuel | 2026-05-29 | 2026-06-05 | 8 | soumis | Vacances d'été | 2026-04-29 11:44:38) Tj
+T*
+(6 | Employe Demo | employe.demo@hrmanager.com | Manager Test | maladie | 2026-04-27 | 2026-04-30 | 4 | valide_manager | Arrêt maladie | 2026-04-29 11:44:38) Tj
+T*
+(7 | Employe Demo | employe.demo@hrmanager.com | Manager Test | exceptionnel | 2026-05-09 | 2026-05-11 | 3 | refuse_manager | Événement familial | 2026-04-29 11:44:38) Tj
+T*
+(2 | Employe Demo | employe.demo@hrmanager.com | Manager Test | conge_annuel | 2026-05-29 | 2026-06-05 | 8 | soumis | Vacances d'été | 2026-04-29 11:42:57) Tj
+T*
+(3 | Employe Demo | employe.demo@hrmanager.com | Manager Test | maladie | 2026-04-27 | 2026-04-30 | 4 | valide_manager | Arrêt maladie | 2026-04-29 11:42:57) Tj
+T*
+(31 | Employe Demo | employe.demo@hrmanager.com | Manager Test | conge_annuel | 2026-03-01 | 2026-03-05 | 5 | approuve | Vacances d'hiver | 2026-01-29 12:09:26) Tj
+T*
+(26 | Employe Demo | employe.demo@hrmanager.com | Manager Test | conge_annuel | 2026-03-01 | 2026-03-05 | 5 | approuve | Vacances d'hiver | 2026-01-29 12:00:45) Tj
+T*
+(20 | Employe Demo | employe.demo@hrmanager.com | Manager Test | conge_annuel | 2026-03-01 | 2026-03-05 | 5 | approuve | Vacances d'hiver | 2026-01-29 11:47:01) Tj
+T*
+(16 | Employe Demo | employe.demo@hrmanager.com | Manager Test | conge_annuel | 2026-03-01 | 2026-03-05 | 5 | approuve | Vacances d'hiver | 2026-01-29 11:46:41) Tj
+T*
+(12 | Employe Demo | employe.demo@hrmanager.com | Manager Test | conge_annuel | 2026-03-01 | 2026-03-05 | 5 | approuve | Vacances d'hiver | 2026-01-29 11:46:10) Tj
+T*
+(8 | Employe Demo | employe.demo@hrmanager.com | Manager Test | conge_annuel | 2026-03-01 | 2026-03-05 | 5 | approuve | Vacances d'hiver | 2026-01-29 11:45:10) Tj
+T*
+(4 | Employe Demo | employe.demo@hrmanager.com | Manager Test | conge_annuel | 2026-03-01 | 2026-03-05 | 5 | approuve | Vacances d'hiver | 2026-01-29 11:44:38) Tj
+T*
+(1 | Employe Demo | employe.demo@hrmanager.com | Manager Test | conge_annuel | 2026-03-01 | 2026-03-05 | 5 | approuve | Vacances d'hiver | 2026-01-29 11:42:57) Tj
+T*
+ET\nendstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000006529 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+6599
+%%EOF

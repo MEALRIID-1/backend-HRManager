@@ -1,0 +1,126 @@
+name: CD
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event.inputs.environment == 'staging')
+    environment: staging
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add host to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.STAGING_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to Staging Server
+        run: |
+          # Export secrets as environment variables for the deploy script
+          export DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
+          export DOCKER_PASSWORD=${{ secrets.DOCKER_PASSWORD }}
+          export GITHUB_SHA=${{ github.sha }}
+          export GITHUB_REF=${{ github.ref }}
+          
+          # Copy deployment script to server and execute
+          scp scripts/deploy.sh ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }}:/tmp/deploy.sh
+          ssh ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }} \
+            "DOCKER_USERNAME=$DOCKER_USERNAME DOCKER_PASSWORD=$DOCKER_PASSWORD GITHUB_SHA=$GITHUB_SHA GITHUB_REF=$GITHUB_REF bash /tmp/deploy.sh staging"
+
+      - name: Run Health Check
+        run: |
+          sleep 30
+          bash scripts/health-check.sh ${{ secrets.STAGING_HOST }} 443
+
+      - name: Cleanup old images
+        run: |
+          ssh ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }} \
+            "docker system prune -f --filter 'until=24h' || true"
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'
+    environment: production
+    needs: deploy-staging
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
+
+      - name: Add host to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.PRODUCTION_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Pre-deployment backup
+        run: |
+          ssh ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }} \
+            "cd /opt/hrmanager && docker-compose -f docker-compose.prod.yml exec -T mysql mysqldump -u root -p'${{ secrets.DB_ROOT_PASSWORD }}' hrmanager > /backups/hrmanager_$(date +%Y%m%d_%H%M%S).sql || true"
+
+      - name: Deploy to Production Server
+        run: |
+          export DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
+          export DOCKER_PASSWORD=${{ secrets.DOCKER_PASSWORD }}
+          export GITHUB_SHA=${{ github.sha }}
+          export GITHUB_REF=${{ github.ref }}
+          
+          scp scripts/deploy.sh ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }}:/tmp/deploy.sh
+          ssh ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }} \
+            "DOCKER_USERNAME=$DOCKER_USERNAME DOCKER_PASSWORD=$DOCKER_PASSWORD GITHUB_SHA=$GITHUB_SHA GITHUB_REF=$GITHUB_REF bash /tmp/deploy.sh production"
+
+      - name: Run Production Health Check
+        run: |
+          sleep 30
+          bash scripts/health-check.sh ${{ secrets.PRODUCTION_HOST }} 443
+
+      - name: Smoke Tests
+        run: |
+          # Test critical endpoints
+          curl -f https://${{ secrets.PRODUCTION_HOST }}/api/health || exit 1
+          curl -f https://${{ secrets.PRODUCTION_HOST }}/api/version || exit 1
+
+      - name: Notify on success
+        if: success()
+        run: |
+          echo "✅ Production deployment successful!"
+          # Add notification webhook here (Slack, Teams, etc.)
+
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "❌ Deployment failed, initiating rollback..."
+          ssh ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }} \
+            "cd /opt/hrmanager && docker-compose -f docker-compose.prod.yml down && docker-compose -f docker-compose.prod.yml up -d --no-deps --build app || true"

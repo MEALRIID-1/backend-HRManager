@@ -18,7 +18,7 @@ return [
     |
     */
 
-    'default' => env('LOG_CHANNEL', 'stack'),
+    'default' => env('LOG_CHANNEL', 'production'),
 
     /*
     |--------------------------------------------------------------------------
@@ -58,6 +58,7 @@ return [
             'ignore_exceptions' => false,
         ],
 
+        // Channel dev uniquement
         'single' => [
             'driver' => 'single',
             'path' => storage_path('logs/laravel.log'),
@@ -68,17 +69,24 @@ return [
         'daily' => [
             'driver' => 'daily',
             'path' => storage_path('logs/laravel.log'),
-            'level' => env('LOG_LEVEL', 'debug'),
-            'days' => env('LOG_DAILY_DAYS', 14),
+            'level' => env('LOG_LEVEL', 'warning'), // Warning et plus grave en production
+            'days' => env('LOG_DAILY_DAYS', 30),
             'replace_placeholders' => true,
+        ],
+
+        // Channel pour production: daily + slack pour erreurs critiques
+        'production' => [
+            'driver' => 'stack',
+            'channels' => ['daily', 'slack'],
+            'ignore_exceptions' => false,
         ],
 
         'slack' => [
             'driver' => 'slack',
             'url' => env('LOG_SLACK_WEBHOOK_URL'),
-            'username' => env('LOG_SLACK_USERNAME', env('APP_NAME', 'Laravel')),
-            'emoji' => env('LOG_SLACK_EMOJI', ':boom:'),
-            'level' => env('LOG_LEVEL', 'critical'),
+            'username' => env('LOG_SLACK_USERNAME', 'HRManager-Alert'),
+            'emoji' => env('LOG_SLACK_EMOJI', ':warning:'),
+            'level' => env('LOG_LEVEL', 'critical'), // Seulement critical et emergency
             'replace_placeholders' => true,
         ],
 

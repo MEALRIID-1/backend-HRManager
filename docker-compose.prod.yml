@@ -1,0 +1,159 @@
+version: '3.8'
+
+services:
+  app:
+    image: ${DOCKER_USERNAME}/hrmanager-backend:${TAG:-latest}
+    container_name: hrmanager-app
+    restart: always
+    env_file:
+      - .env.production
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+    volumes:
+      - app-storage:/var/www/storage
+      - app-bootstrap:/var/www/bootstrap/cache
+    networks:
+      - hrmanager-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "php", "artisan", "health:check"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  mysql:
+    image: mysql:8.0
+    container_name: hrmanager-mysql
+    restart: always
+    env_file:
+      - .env.production
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./backups:/backups
+    networks:
+      - hrmanager-network
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+
+  redis:
+    image: redis:7-alpine
+    container_name: hrmanager-redis
+    restart: always
+    volumes:
+      - redis-data:/data
+    networks:
+      - hrmanager-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+  queue-worker:
+    image: ${DOCKER_USERNAME}/hrmanager-backend:${TAG:-latest}
+    container_name: hrmanager-queue
+    restart: always
+    env_file:
+      - .env.production
+    environment:
+      - APP_ENV=production
+    command: php artisan queue:work --sleep=3 --tries=3 --timeout=90
+    volumes:
+      - app-storage:/var/www/storage
+    networks:
+      - hrmanager-network
+    depends_on:
+      - mysql
+      - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  scheduler:
+    image: ${DOCKER_USERNAME}/hrmanager-backend:${TAG:-latest}
+    container_name: hrmanager-scheduler
+    restart: always
+    env_file:
+      - .env.production
+    environment:
+      - APP_ENV=production
+    command: php artisan schedule:run
+    volumes:
+      - app-storage:/var/www/storage
+    networks:
+      - hrmanager-network
+    depends_on:
+      - mysql
+      - redis
+
+  nginx:
+    image: nginx:alpine
+    container_name: hrmanager-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/ssl:/etc/nginx/ssl:ro
+      - app-storage:/var/www/storage:ro
+    networks:
+      - hrmanager-network
+    depends_on:
+      app:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+networks:
+  hrmanager-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+    driver: local
+  redis-data:
+    driver: local
+  app-storage:
+    driver: local
+  app-bootstrap:
+    driver: local

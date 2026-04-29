@@ -17,14 +17,23 @@ class AuthResource extends JsonResource
 
     public function toArray(Request $request): array
     {
+        $roles = $this->relationLoaded('roles')
+            ? $this->roles->pluck('name')->values()->all()
+            : [];
+
+        $permissions = $this->relationLoaded('roles')
+            ? $this->roles->flatMap->permissions->pluck('name')->unique()->values()->all()
+            : [];
+
         return [
             'user' => [
                 'id' => $this->id,
                 'name' => $this->name,
                 'email' => $this->email,
+                'role' => $roles[0] ?? null,
             ],
-            'roles' => $this->whenLoaded('roles', fn () => $this->roles->pluck('name')),
-            'permissions' => $this->whenLoaded('roles.permissions', fn () => $this->roles->flatMap->permissions->pluck('name')->unique()),
+            'roles' => $roles,
+            'permissions' => $permissions,
             'token' => $this->when($this->token, $this->token),
         ];
     }

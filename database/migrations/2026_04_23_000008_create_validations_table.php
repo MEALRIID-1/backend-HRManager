@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('validations', function (Blueprint $table) {
             $table->id();
+            $table->string('niveau');
             $table->unsignedBigInteger('conge_id');
             $table->unsignedBigInteger('valideur_id');
             $table->string('statut');
@@ -19,6 +20,7 @@ return new class extends Migration
             $table->foreign('conge_id')->references('id')->on('conges')->onDelete('cascade');
             $table->foreign('valideur_id')->references('id')->on('users')->onDelete('restrict');
 
+            $table->index('niveau');
             $table->index('conge_id');
             $table->index('valideur_id');
             $table->index('statut');

@@ -9,6 +9,8 @@ use App\Modules\Auth\Http\Resources\AuthResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class AuthController
 {
@@ -18,7 +20,6 @@ class AuthController
             DB::beginTransaction();
 
             $user = User::where('email', $request->email)->first();
-
             if (!$user || !Hash::check($request->password, $user->password)) {
                 return response()->json([
                     'success' => false,
@@ -27,26 +28,33 @@ class AuthController
                 ], 401);
             }
 
+            $user->loadMissing(['roles.permissions']);
+
+            // ✅ Génération d’un token Bearer
             $abilities = $this->getAbilities($user);
+            $token = $user->createToken('auth_token', $abilities)->plainTextToken;
 
-            $token = $user->createToken('auth_token', $abilities);
-
-            ActivityLog::create([
-                'user_id' => $user->id,
-                'action' => 'login',
-                'model' => 'User',
-                'model_id' => $user->id,
-            ]);
+            try {
+                ActivityLog::create([
+                    'user_id' => $user->id,
+                    'action' => 'login',
+                    'entity_name' => 'User',
+                    'entity_id' => $user->id,
+                ]);
+            } catch (\Exception $e) {
+                Log::warning('ActivityLog create failed: ' . $e->getMessage());
+            }
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Connexion réussie.',
-                'data' => new AuthResource($user, $token->plainTextToken),
+                'data' => new AuthResource($user, $token),
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('AuthController@login exception: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
 
             return response()->json([
                 'success' => false,
@@ -97,7 +105,10 @@ class AuthController
     public function me(): JsonResponse
     {
         try {
-            $user = auth()->user()->load('roles.permissions');
+            $user = auth()->user();
+            if (Schema::hasTable('roles') && Schema::hasTable('permissions')) {
+                $user->load('roles.permissions');
+            }
 
             return response()->json([
                 'success' => true,
@@ -120,13 +131,13 @@ class AuthController
             $oldToken = $user->currentAccessToken();
             $abilities = $this->getAbilities($user);
 
-            $newToken = $user->createToken('auth_token', $abilities);
+            $newToken = $user->createToken('auth_token', $abilities)->plainTextToken;
             $oldToken->delete();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Token rafraîchi.',
-                'data' => new AuthResource($user, $newToken->plainTextToken),
+                'data' => new AuthResource($user, $newToken),
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -139,10 +150,18 @@ class AuthController
 
     private function getAbilities(User $user): array
     {
-        if ($user->hasRole('admin')) {
+        if (!Schema::hasTable('roles') || !Schema::hasTable('permissions') || !Schema::hasTable('model_has_roles')) {
+            return [];
+        }
+
+        if (method_exists($user, 'hasRole') && $user->hasRole('admin')) {
             return ['*'];
         }
 
-        return $user->getAllPermissions()->pluck('name')->toArray();
+        if (method_exists($user, 'getAllPermissions')) {
+            return $user->getAllPermissions()->pluck('name')->toArray();
+        }
+
+        return [];
     }
 }

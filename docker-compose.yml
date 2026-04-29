@@ -7,21 +7,29 @@ services:
       dockerfile: Dockerfile
     container_name: hrmanager_app
     restart: unless-stopped
-    working_dir: /var/www
-    volumes:
-      - ./:/var/www
-    networks:
-      - hrmanager
-
-  nginx:
-    image: nginx:alpine
-    container_name: hrmanager_nginx
-    restart: unless-stopped
     ports:
       - "8000:80"
+    working_dir: /var/www
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - APP_URL=http://localhost:8000
+      - DB_CONNECTION=mysql
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_DATABASE=hrmanager
+      - DB_USERNAME=user
+      - DB_PASSWORD=password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - MAIL_MAILER=smtp
+      - MAIL_HOST=mailpit
+      - MAIL_PORT=1025
+      - RUN_MIGRATIONS=true
+      - RUN_SEEDERS=true
     volumes:
       - ./:/var/www
-      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+      - /var/www/vendor  # Volume anonyme pour préserver vendor de l'image
     networks:
       - hrmanager
 
@@ -35,7 +43,7 @@ services:
       MYSQL_PASSWORD: password
       MYSQL_USER: user
     ports:
-      - "3306:3306"
+      - "3308:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     networks:

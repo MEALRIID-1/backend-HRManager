@@ -1,0 +1,92 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Docker
+.docker
+docker-compose*.yml
+Dockerfile*
+.dockerignore
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Tests
+tests/
+phpunit.xml
+phpunit.xml.dist
+.coverage
+coverage.xml
+.phpunit.result.cache
+.phpunit.cache
+
+# Build tools
+.github
+.gitlab-ci.yml
+travis.yml
+
+# Development files
+.env
+.env.local
+.env.testing
+.env.example
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependencies (seront installées dans le container)
+node_modules/
+
+# Storage (montés en volumes)
+storage/app/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/testing/*
+storage/framework/views/*
+storage/logs/*
+!storage/app/public/.gitkeep
+!storage/framework/cache/.gitkeep
+!storage/framework/sessions/.gitkeep
+!storage/framework/views/.gitkeep
+!storage/logs/.gitkeep
+
+# Cache
+bootstrap/cache/*
+!bootstrap/cache/.gitkeep
+
+# Symbolic links (seront recréés)
+public/storage
+
+# Documentation
+README.md
+CHANGELOG.md
+LICENSE
+*.md
+
+# CI/CD
+scripts/
+.github/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# OS files
+Thumbs.db
+desktop.ini
+
+# Composer dev dependencies (sont réinstallées)
+vendor/bin/php-cs-fixer
+vendor/bin/phpstan
+vendor/bin/phpunit
+
+# MinIO/S3 local storage
+storage/s3/

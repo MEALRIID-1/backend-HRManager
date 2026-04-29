@@ -18,7 +18,14 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class,
             PermissionSeeder::class,
-            UserSeeder::class,
         ]);
+
+        // En environnement de développement, charger aussi les données de démo
+        if (app()->environment('local', 'development', 'dev', 'testing')) {
+            $this->call([
+                DemoSeeder::class,
+                TestEmployeeSeeder::class, // Données spécifiques pour tester l'interface employé
+            ]);
+        }
     }
 }

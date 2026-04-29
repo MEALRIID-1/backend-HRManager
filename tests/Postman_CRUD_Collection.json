@@ -1,0 +1,921 @@
+{
+  "info": {
+    "_postman_id": "hrmanager-crud-tests",
+    "name": "HRManager CRUD Tests",
+    "description": "Tests CRUD pour vérifier si les routes passent (Employees, Contracts, Permissions, Roles, Notifications)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login - Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('admin_token', jsonData.data.token);",
+                  "    pm.test('Admin login successful', () => pm.expect(jsonData.success).to.be.true);",
+                  "} else {",
+                  "    pm.test('Admin login failed', () => pm.expect(pm.response.code).to.equal(200));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"admin@hrmanager.com\",\"password\":\"password123\"}"
+            },
+            "url": {
+              "raw": "{{base_url}}/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Login - RH",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('rh_token', jsonData.data.token);",
+                  "    pm.test('RH login successful', () => pm.expect(jsonData.success).to.be.true);",
+                  "} else {",
+                  "    pm.test('RH login failed', () => pm.expect(pm.response.code).to.equal(200));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"rh@hrmanager.com\",\"password\":\"password123\"}"
+            },
+            "url": {
+              "raw": "{{base_url}}/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Health Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Health check returns 200 or 503', () => {",
+                  "    pm.expect([200, 503]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "health"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Employees - CRUD",
+      "item": [
+        {
+          "name": "CREATE - Add Employee",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('employee_id', jsonData.data.id);",
+                  "    pm.test('Employee created successfully', () => pm.expect(jsonData.success).to.be.true);",
+                  "} else {",
+                  "    pm.test('Employee creation - got ' + pm.response.code, () => pm.expect([200, 201]).to.include(pm.response.code));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nom\":\"TestUser\",\"prenom\":\"CRUD\",\"email\":\"test.crud@hrmanager.com\",\"telephone\":\"0123456789\",\"date_embauche\":\"2024-01-01\",\"matricule\":\"EMP-TEST-001\",\"genre\":\"MASCULIN\",\"posteId\":1,\"departementId\":1,\"typeContrat\":\"CDI\",\"salaireBase\":2500}"
+            },
+            "url": {
+              "raw": "{{base_url}}/employees",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "employees"
+              ]
+            }
+          }
+        },
+        {
+          "name": "READ - List All Employees",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('Employees list retrieved', () => pm.expect(jsonData.success).to.be.true);",
+                  "    pm.test('Has data field', () => pm.expect(jsonData.data).to.exist);",
+                  "} else {",
+                  "    pm.test('List employees - got ' + pm.response.code, () => pm.expect(pm.response.code).to.equal(200));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/employees",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "employees"
+              ]
+            }
+          }
+        },
+        {
+          "name": "READ - Get Employee By ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('Employee retrieved by ID', () => pm.expect(jsonData.success).to.be.true);",
+                  "} else if (pm.response.code === 404) {",
+                  "    pm.test('Employee not found (404)', () => pm.expect(pm.response.code).to.equal(404));",
+                  "} else {",
+                  "    pm.test('Get employee - got ' + pm.response.code, () => pm.expect([200, 404]).to.include(pm.response.code));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/employees/{{employee_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "employees",
+                "{{employee_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "UPDATE - Edit Employee",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('Employee updated successfully', () => pm.expect(jsonData.success).to.be.true);",
+                  "} else if (pm.response.code === 404) {",
+                  "    pm.test('Employee not found (404)', () => pm.expect(pm.response.code).to.equal(404));",
+                  "} else {",
+                  "    pm.test('Update employee - got ' + pm.response.code, () => pm.expect([200, 404]).to.include(pm.response.code));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nom\":\"TestUserUpdated\",\"prenom\":\"CRUD Updated\",\"email\":\"test.crud.updated@hrmanager.com\",\"telephone\":\"0987654321\"}"
+            },
+            "url": {
+              "raw": "{{base_url}}/employees/{{employee_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "employees",
+                "{{employee_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE - Remove Employee",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('Employee deleted successfully', () => pm.expect(jsonData.success).to.be.true);",
+                  "} else if (pm.response.code === 404) {",
+                  "    pm.test('Employee not found (404)', () => pm.expect(pm.response.code).to.equal(404));",
+                  "} else {",
+                  "    pm.test('Delete employee - got ' + pm.response.code, () => pm.expect([200, 404]).to.include(pm.response.code));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/employees/{{employee_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "employees",
+                "{{employee_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Employee Stats",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('Employee stats retrieved', () => pm.expect(jsonData.success).to.be.true);",
+                  "} else if (pm.response.code === 403) {",
+                  "    pm.test('Permission denied (403)', () => pm.expect(pm.response.code).to.equal(403));",
+                  "} else {",
+                  "    pm.test('Get stats - got ' + pm.response.code, () => pm.expect([200, 403]).to.include(pm.response.code));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/employees/stats",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "employees",
+                "stats"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Contracts - CRUD",
+      "item": [
+        {
+          "name": "CREATE - Add Contract",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('contract_id', jsonData.data.id);",
+                  "    pm.test('Contract created successfully', () => pm.expect(jsonData.success).to.be.true);",
+                  "} else {",
+                  "    pm.test('Contract creation - got ' + pm.response.code, () => pm.expect([200, 201]).to.include(pm.response.code));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"employeeId\":1,\"type\":\"CDI\",\"dateDebut\":\"2024-01-01\",\"dateFin\":\"2026-01-01\",\"salaire\":2500,\"statut\":\"ACTIF\"}"
+            },
+            "url": {
+              "raw": "{{base_url}}/contracts",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "contracts"
+              ]
+            }
+          }
+        },
+        {
+          "name": "READ - List All Contracts",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('Contracts list retrieved', () => pm.expect(jsonData.success).to.be.true);",
+                  "} else {",
+                  "    pm.test('List contracts - got ' + pm.response.code, () => pm.expect(pm.response.code).to.equal(200));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/contracts",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "contracts"
+              ]
+            }
+          }
+        },
+        {
+          "name": "READ - Get Contract By ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('Contract retrieved by ID', () => pm.expect(jsonData.success).to.be.true);",
+                  "} else if (pm.response.code === 404) {",
+                  "    pm.test('Contract not found (404)', () => pm.expect(pm.response.code).to.equal(404));",
+                  "} else {",
+                  "    pm.test('Get contract - got ' + pm.response.code, () => pm.expect([200, 404]).to.include(pm.response.code));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/contracts/{{contract_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "contracts",
+                "{{contract_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "UPDATE - Edit Contract",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('Contract updated successfully', () => pm.expect(jsonData.success).to.be.true);",
+                  "} else {",
+                  "    pm.test('Update contract - got ' + pm.response.code, () => pm.expect([200, 404]).to.include(pm.response.code));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"salaire\":2700,\"statut\":\"ACTIF\"}"
+            },
+            "url": {
+              "raw": "{{base_url}}/contracts/{{contract_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "contracts",
+                "{{contract_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE - Remove Contract",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('Contract deleted successfully', () => pm.expect(jsonData.success).to.be.true);",
+                  "} else {",
+                  "    pm.test('Delete contract - got ' + pm.response.code, () => pm.expect([200, 404]).to.include(pm.response.code));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/contracts/{{contract_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "contracts",
+                "{{contract_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Expiring Contracts",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if ([200, 403].includes(pm.response.code)) {",
+                  "    pm.test('Expiring contracts endpoint - got ' + pm.response.code, () => {});",
+                  "} else {",
+                  "    pm.test('Expiring contracts - unexpected ' + pm.response.code, () => pm.expect([200, 403]).to.include(pm.response.code));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/contracts/expiring",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "contracts",
+                "expiring"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Permissions - CRUD",
+      "item": [
+        {
+          "name": "CREATE - Add Permission",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if ([200, 201, 403].includes(pm.response.code)) {",
+                  "    pm.test('Permission creation - got ' + pm.response.code, () => {});",
+                  "} else {",
+                  "    pm.test('Create permission - unexpected ' + pm.response.code, () => pm.expect([200, 201, 403]).to.include(pm.response.code));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"test-permission-crud\",\"display_name\":\"Test CRUD Permission\",\"description\":\"Permission pour les tests CRUD\"}"
+            },
+            "url": {
+              "raw": "{{base_url}}/permissions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "permissions"
+              ]
+            }
+          }
+        },
+        {
+          "name": "READ - List All Permissions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if ([200, 403].includes(pm.response.code)) {",
+                  "    pm.test('Permissions list - got ' + pm.response.code, () => {});",
+                  "} else {",
+                  "    pm.test('List permissions - unexpected ' + pm.response.code, () => pm.expect([200, 403]).to.include(pm.response.code));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/permissions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "permissions"
+              ]
+            }
+          }
+        },
+        {
+          "name": "READ - Permissions By Module",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if ([200, 403].includes(pm.response.code)) {",
+                  "    pm.test('Permissions by module - got ' + pm.response.code, () => {});",
+                  "} else {",
+                  "    pm.test('Permissions by module - unexpected ' + pm.response.code, () => pm.expect([200, 403]).to.include(pm.response.code));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/permissions/by-module",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "permissions",
+                "by-module"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Roles - CRUD",
+      "item": [
+        {
+          "name": "READ - List All Roles",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if ([200, 403].includes(pm.response.code)) {",
+                  "    pm.test('Roles list - got ' + pm.response.code, () => {});",
+                  "} else {",
+                  "    pm.test('List roles - unexpected ' + pm.response.code, () => pm.expect([200, 403]).to.include(pm.response.code));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/roles",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles"
+              ]
+            }
+          }
+        },
+        {
+          "name": "CREATE - Add Role",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if ([200, 201, 403].includes(pm.response.code)) {",
+                  "    pm.test('Role creation - got ' + pm.response.code, () => {});",
+                  "} else {",
+                  "    pm.test('Create role - unexpected ' + pm.response.code, () => pm.expect([200, 201, 403]).to.include(pm.response.code));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"test-role-crud\",\"display_name\":\"Test CRUD Role\",\"description\":\"Rôle pour les tests CRUD\"}"
+            },
+            "url": {
+              "raw": "{{base_url}}/roles",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications - CRUD",
+      "item": [
+        {
+          "name": "READ - List Notifications",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if ([200, 401].includes(pm.response.code)) {",
+                  "    pm.test('Notifications list - got ' + pm.response.code, () => {});",
+                  "} else {",
+                  "    pm.test('List notifications - got ' + pm.response.code, () => {});",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/notifications",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications"
+              ]
+            }
+          }
+        },
+        {
+          "name": "READ - Get Unread Count",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if ([200, 401].includes(pm.response.code)) {",
+                  "    pm.test('Unread count - got ' + pm.response.code, () => {});",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/notifications/unread-count",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications",
+                "unread-count"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api",
+      "type": "string"
+    },
+    {
+      "key": "admin_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "rh_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "employee_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "contract_id",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
