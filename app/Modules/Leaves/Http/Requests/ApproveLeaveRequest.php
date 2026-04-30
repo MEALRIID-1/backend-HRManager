@@ -11,7 +11,7 @@ class ApproveLeaveRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        $conge = $this->route('leave');
+        $conge = $this->route('conge');
         $user = auth()->user();
 
         // Vérifier que l'utilisateur peut approuver ce congé selon le workflow

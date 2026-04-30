@@ -5,9 +5,9 @@ namespace App\Modules\Leaves\Services;
 use App\Models\Conge;
 use App\Models\User;
 use App\Models\Validation;
-use App\Notifications\LeaveApprovedNotification;
-use App\Notifications\LeaveRejectedNotification;
-use App\Notifications\LeaveSubmittedNotification;
+use App\Notifications\CongeApprovedNotification;
+use App\Notifications\CongeRejectedNotification;
+use App\Notifications\CongeSubmittedNotification;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
@@ -215,15 +215,15 @@ class LeaveWorkflowService
 
         try {
             if ($decision === 'approuve') {
-                $employe->notify(new LeaveApprovedNotification($conge));
+                $employe->notify(new CongeApprovedNotification($conge));
 
                 // Notifier aussi les RH et directeurs
                 $rhEtAdmin = User::role(['rh', 'admin', 'directeur'])
                     ->where('id', '!=', $validateur->id)
                     ->get();
-                Notification::send($rhEtAdmin, new LeaveApprovedNotification($conge));
+                Notification::send($rhEtAdmin, new CongeApprovedNotification($conge));
             } else {
-                $employe->notify(new LeaveRejectedNotification($conge, $validateur, $motif ?? ''));
+                $employe->notify(new CongeRejectedNotification($conge, $validateur, $motif ?? ''));
             }
         } catch (\Exception $e) {
             // Ne pas bloquer le workflow si les notifications échouent
@@ -274,7 +274,7 @@ class LeaveWorkflowService
             // Notifier le manager
             $manager = $employe->manager;
             if ($manager) {
-                Notification::send($manager, new LeaveSubmittedNotification($conge));
+                Notification::send($manager, new CongeSubmittedNotification($conge));
             }
 
             DB::commit();
@@ -417,25 +417,25 @@ class LeaveWorkflowService
             case 'approve_manager':
                 // Notifier RH
                 $rhUsers = User::role(['rh', 'admin'])->get();
-                Notification::send($rhUsers, new LeaveSubmittedNotification($conge));
+                Notification::send($rhUsers, new CongeSubmittedNotification($conge));
                 break;
 
             case 'approve_rh':
                 // Notifier Directeur
                 $directeurs = User::role(['directeur', 'admin'])->get();
-                Notification::send($directeurs, new LeaveSubmittedNotification($conge));
+                Notification::send($directeurs, new CongeSubmittedNotification($conge));
                 break;
 
             case 'approve_directeur':
                 // Notifier employé de l'approbation finale
-                $employe->notify(new LeaveApprovedNotification($conge));
+                $employe->notify(new CongeApprovedNotification($conge));
                 break;
 
             case 'reject_manager':
             case 'reject_rh':
             case 'reject_directeur':
                 // Notifier employé du refus
-                $employe->notify(new LeaveRejectedNotification($conge, $validateur, $motif));
+                $employe->notify(new CongeRejectedNotification($conge, $validateur, $motif));
                 break;
         }
     }

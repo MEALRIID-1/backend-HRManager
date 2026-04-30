@@ -197,7 +197,7 @@ class DashboardController
      * Paramètres: 
      *   - type: 'leaves' | 'employees'
      *   - format: 'csv' | 'xlsx' (défaut: xlsx)
-     *   - filtres optionnels (etat, type, date_debut, date_fin, etc.)
+     *   - filtres optionnels (statut, type, date_debut, date_fin, etc.)
      * 
      * Utilise Maatwebsite/Excel pour la génération
      */
@@ -461,7 +461,7 @@ class DashboardController
                 return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
             }
 
-            $filters = $request->only(['debut', 'fin', 'etat', 'type', 'employe_id']);
+            $filters = $request->only(['debut', 'fin', 'statut', 'type', 'employe_id']);
 
             // Si manager, restreindre aux membres de son équipe sauf si rôle RH/Directeur/Admin
             $user = auth()->user();
@@ -626,7 +626,7 @@ class DashboardController
                 ->count();
 
             $approuves = \App\Models\Conge::where('type', $type)
-                ->where('statut', 'approuve')
+                ->where('etat', 'approuve')
                 ->whereYear('created_at', now()->year)
                 ->count();
 

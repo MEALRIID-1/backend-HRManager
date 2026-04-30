@@ -80,12 +80,12 @@ class LeaveController
             }
 
             $perPage = $request->input('per_page', 15);
-            $leaves = $query->orderBy('created_at', 'desc')->paginate($perPage);
+            $conges = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Congés récupérés avec succès.',
-                'data' => new LeaveCollection($leaves),
+                'data' => new LeaveCollection($conges),
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -154,15 +154,15 @@ class LeaveController
     /**
      * Afficher un congé.
      */
-    public function show(Conge $leave): JsonResponse
+    public function show(Conge $conge): JsonResponse
     {
         try {
             $user = auth()->user();
 
             // Vérifier les permissions
-            $canView = $user->id === $leave->employe_id ||
+            $canView = $user->id === $conge->employe_id ||
                        $user->hasRole(['rh', 'admin', 'directeur']) ||
-                       ($user->hasRole('manager') && $leave->employe->manager_id === $user->id);
+                       ($user->hasRole('manager') && $conge->employe->manager_id === $user->id);
 
             if (!$canView) {
                 return response()->json([
@@ -175,7 +175,7 @@ class LeaveController
             return response()->json([
                 'success' => true,
                 'message' => 'Congé récupéré avec succès.',
-                'data' => new LeaveResource($leave->load(['employe', 'validations.validateur'])),
+                'data' => new LeaveResource($conge->load(['employe', 'validations.validateur'])),
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -189,11 +189,11 @@ class LeaveController
     /**
      * Soumettre un congé (brouillon -> soumis).
      */
-    public function submit(Conge $leave): JsonResponse
+    public function submit(Conge $conge): JsonResponse
     {
         try {
             $user = auth()->user();
-            $conge = $this->workflowService->soumettre($leave, $user);
+            $conge = $this->workflowService->soumettre($conge, $user);
 
             return response()->json([
                 'success' => true,
@@ -212,11 +212,11 @@ class LeaveController
     /**
      * Approuver un congé.
      */
-    public function approve(Conge $leave): JsonResponse
+    public function approve(Conge $conge): JsonResponse
     {
         try {
             $validateur = auth()->user();
-            $conge = $this->workflowService->approuver($leave, $validateur, request('commentaire'));
+            $conge = $this->workflowService->approuver($conge, $validateur, request('commentaire'));
 
             return response()->json([
                 'success' => true,
@@ -235,12 +235,12 @@ class LeaveController
     /**
      * Refuser un congé.
      */
-    public function reject(RejectLeaveRequest $request, Conge $leave): JsonResponse
+    public function reject(RejectLeaveRequest $request, Conge $conge): JsonResponse
     {
         try {
             $validateur = auth()->user();
             $motif = $request->validated()['motif'];
-            $conge = $this->workflowService->refuser($leave, $validateur, $motif);
+            $conge = $this->workflowService->refuser($conge, $validateur, $motif);
 
             return response()->json([
                 'success' => true,
@@ -259,7 +259,7 @@ class LeaveController
     /**
      * Super-validation (Directeur/Admin uniquement) — court-circuiter le workflow.
      */
-    public function superValider(Request $request, Conge $leave): JsonResponse
+    public function superValider(Request $request, Conge $conge): JsonResponse
     {
         try {
             $user = auth()->user();
@@ -279,7 +279,7 @@ class LeaveController
             ]);
 
             $conge = $this->workflowService->superValider(
-                $leave,
+                $conge,
                 $user,
                 $request->input('decision'),
                 $request->input('commentaire'),
@@ -307,12 +307,12 @@ class LeaveController
     /**
      * Annuler un congé.
      */
-    public function cancel(CancelLeaveRequest $request, Conge $leave): JsonResponse
+    public function cancel(CancelLeaveRequest $request, Conge $conge): JsonResponse
     {
         try {
             $user = auth()->user();
             $motif = $request->validated()['motif'];
-            $conge = $this->workflowService->annuler($leave, $user, $motif);
+            $conge = $this->workflowService->annuler($conge, $user, $motif);
 
             return response()->json([
                 'success' => true,

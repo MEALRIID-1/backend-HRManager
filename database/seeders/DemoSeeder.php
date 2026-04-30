@@ -220,7 +220,7 @@ class DemoSeeder extends Seeder
 
     private function createFichesPaie(array $employes): void
     {
-        $annee = now()->year
+        $annee = now()->year;
         $moisActuel = now()->month;
 
         foreach ($employes as $employe) {
