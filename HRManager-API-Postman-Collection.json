@@ -1,0 +1,937 @@
+{
+  "info": {
+    "_postman_id": "hrmanager-api-v1",
+    "name": "HRManager API v1",
+    "description": "API complète de gestion des ressources humaines - Authentication, Employés, Congés, Contrats, Rapports, Notifications, Paramètres",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@hrmanager.com\",\n  \"password\": \"Admin@2024!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "Authentification utilisateur - Rate limit: 5 req/minute"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "logout"]
+            }
+          }
+        },
+        {
+          "name": "Me (Current User)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "me"]
+            }
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_password\": \"Admin@2024!\",\n  \"new_password\": \"NewPassword123!\",\n  \"new_password_confirmation\": \"NewPassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/change-password",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "change-password"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "👤 Employés",
+      "item": [
+        {
+          "name": "List Employés",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/employes?departement=IT&per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "employes"],
+              "query": [
+                {
+                  "key": "departement",
+                  "value": "IT"
+                },
+                {
+                  "key": "per_page",
+                  "value": "15"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Employé (RH/Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nom\": \"Dupont\",\n  \"prenom\": \"Jean\",\n  \"email\": \"jean.dupont@company.com\",\n  \"matricule\": \"EMP-001\",\n  \"poste\": \"Développeur\",\n  \"departement\": \"IT\",\n  \"date_embauche\": \"2024-01-15\",\n  \"telephone\": \"0123456789\",\n  \"adresse\": \"123 Rue Example\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/employes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "employes"]
+            }
+          }
+        },
+        {
+          "name": "Show Employé",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/employes/{{employe_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "employes", "{{employe_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Employé (RH/Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nom\": \"Dupont Modifié\",\n  \"poste\": \"Senior Développeur\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/employes/{{employe_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "employes", "{{employe_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Employé (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/employes/{{employe_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "employes", "{{employe_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Restore Employé (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/employes/{{employe_id}}/restore",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "employes", "{{employe_id}}", "restore"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📅 Congés",
+      "item": [
+        {
+          "name": "List Congés",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/conges?etat=en_attente&per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "conges"],
+              "query": [
+                {
+                  "key": "etat",
+                  "value": "en_attente"
+                },
+                {
+                  "key": "per_page",
+                  "value": "15"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mes Congés",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/conges/mes-conges",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "conges", "mes-conges"]
+            }
+          }
+        },
+        {
+          "name": "Create Congé (Employé)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"conge_paye\",\n  \"date_debut\": \"2024-06-15\",\n  \"date_fin\": \"2024-06-20\",\n  \"commentaire\": \"Vacances d'été\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/conges",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "conges"]
+            }
+          }
+        },
+        {
+          "name": "Valider N1 (Manager)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"niveau\": 1,\n  \"commentaire\": \"Validation manager OK\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/conges/{{conge_id}}/valider",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "conges", "{{conge_id}}", "valider"]
+            }
+          }
+        },
+        {
+          "name": "Valider N2 (RH)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"niveau\": 2,\n  \"commentaire\": \"Validation RH OK\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/conges/{{conge_id}}/valider",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "conges", "{{conge_id}}", "valider"]
+            }
+          }
+        },
+        {
+          "name": "Super Validation N3 (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"niveau\": 3,\n  \"commentaire\": \"Validation finale admin\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/conges/{{conge_id}}/valider",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "conges", "{{conge_id}}", "valider"]
+            }
+          }
+        },
+        {
+          "name": "Refuser Congé",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"motif_refus\": \"Manque de personnel\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/conges/{{conge_id}}/refuser",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "conges", "{{conge_id}}", "refuser"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📄 Contrats",
+      "item": [
+        {
+          "name": "List Contrats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/contrats",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "contrats"]
+            }
+          }
+        },
+        {
+          "name": "Mon Contrat (Employé)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/contrats/mon-contrat",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "contrats", "mon-contrat"]
+            }
+          }
+        },
+        {
+          "name": "Create Contrat (RH/Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employe_id\": 1,\n  \"type\": \"CDI\",\n  \"date_debut\": \"2024-01-01\",\n  \"salaire_base\": 3500\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/contrats",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "contrats"]
+            }
+          }
+        },
+        {
+          "name": "Générer PDF (RH/Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/contrats/{{contrat_id}}/generer-pdf",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "contrats", "{{contrat_id}}", "generer-pdf"]
+            }
+          }
+        },
+        {
+          "name": "Télécharger PDF (RH/Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/contrats/{{contrat_id}}/telecharger",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "contrats", "{{contrat_id}}", "telecharger"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📊 Dashboard & Rapports",
+      "item": [
+        {
+          "name": "Dashboard (Auto par rôle)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "dashboard"]
+            }
+          }
+        },
+        {
+          "name": "Rapport Congés",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/rapports/conges?date_debut=2024-01-01&date_fin=2024-12-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "rapports", "conges"],
+              "query": [
+                {
+                  "key": "date_debut",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "date_fin",
+                  "value": "2024-12-31"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Rapport Employés",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/rapports/employes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "rapports", "employes"]
+            }
+          }
+        },
+        {
+          "name": "Export PDF (Admin/RH)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/rapports/conges/export-pdf",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "rapports", "conges", "export-pdf"]
+            }
+          }
+        },
+        {
+          "name": "Export Excel (Admin/RH)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/rapports/employes/export-excel",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "rapports", "employes", "export-excel"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔔 Notifications",
+      "item": [
+        {
+          "name": "List Notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notifications"]
+            }
+          }
+        },
+        {
+          "name": "Unread Count (Badge)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications/unread-count",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notifications", "unread-count"]
+            }
+          }
+        },
+        {
+          "name": "Mark as Read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications/{{notification_id}}/mark-as-read",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notifications", "{{notification_id}}", "mark-as-read"]
+            }
+          }
+        },
+        {
+          "name": "Mark All as Read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications/mark-all-as-read",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notifications", "mark-all-as-read"]
+            }
+          }
+        },
+        {
+          "name": "Delete Notification",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications/{{notification_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notifications", "{{notification_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "⚙️ Paramètres (Admin)",
+      "item": [
+        {
+          "name": "List Rôles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/parametres/roles",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "parametres", "roles"]
+            }
+          }
+        },
+        {
+          "name": "Create Rôle",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nom\": \"Superviseur\",\n  \"slug\": \"superviseur\",\n  \"description\": \"Supervision d'équipe\",\n  \"niveau_validation\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/parametres/roles",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "parametres", "roles"]
+            }
+          }
+        },
+        {
+          "name": "List Permissions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/parametres/permissions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "parametres", "permissions"]
+            }
+          }
+        },
+        {
+          "name": "Assign Permissions to Rôle",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"permissions\": [1, 2, 3]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/parametres/roles/{{role_id}}/permissions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "parametres", "roles", "{{role_id}}", "permissions"]
+            }
+          }
+        },
+        {
+          "name": "Assign Rôle to User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/parametres/users/{{user_id}}/roles",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "parametres", "users", "{{user_id}}", "roles"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "👤 Profil",
+      "item": [
+        {
+          "name": "Update Profil",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nom\": \"Nouveau Nom\",\n  \"telephone\": \"0123456789\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/profil",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "profil"]
+            }
+          }
+        },
+        {
+          "name": "Upload Photo Profil",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "multipart/form-data"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "photo",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/profil/photo",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "profil", "photo"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "admin_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "employe_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "conge_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "contrat_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "notification_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "role_id",
+      "value": "1",
+      "type": "string"
+    }
+  ]
+}

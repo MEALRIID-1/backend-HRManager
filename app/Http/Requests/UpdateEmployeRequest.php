@@ -1,0 +1,49 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+
+class UpdateEmployeRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        $userId = $this->route('id');
+
+        return [
+            'nom' => ['sometimes', 'required', 'string', 'max:100'],
+            'prenom' => ['sometimes', 'required', 'string', 'max:100'],
+            'email' => ['sometimes', 'required', 'email', 'string', 'max:255', Rule::unique('users', 'email')->ignore($userId)],
+            'departement' => ['nullable', 'string', 'max:100'],
+            'photo_profil' => ['nullable', 'string', 'max:255'],
+            'date_embauche' => ['nullable', 'date', 'before_or_equal:today'],
+            'iban' => ['nullable', 'string', 'max:34'],
+            'is_active' => ['nullable', 'boolean'],
+            'role_ids' => ['nullable', 'array'],
+            'role_ids.*' => ['integer', 'exists:roles,id'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'nom.required' => 'Le nom est requis.',
+            'nom.max' => 'Le nom ne doit pas dépasser 100 caractères.',
+            'prenom.required' => 'Le prénom est requis.',
+            'prenom.max' => 'Le prénom ne doit pas dépasser 100 caractères.',
+            'email.required' => 'L\'adresse email est requise.',
+            'email.email' => 'L\'adresse email n\'est pas valide.',
+            'email.unique' => 'Cette adresse email est déjà utilisée.',
+            'date_embauche.before_or_equal' => 'La date d\'embauche ne peut pas être dans le futur.',
+            'role_ids.*.exists' => 'Un des rôles sélectionnés n\'existe pas.',
+        ];
+    }
+}

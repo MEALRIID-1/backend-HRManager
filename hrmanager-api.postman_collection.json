@@ -1,0 +1,1207 @@
+{
+  "info": {
+    "name": "HRManager API",
+    "description": "Collection API complète pour HRManager - Système de Gestion des Ressources Humaines",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "1"
+  },
+  "item": [
+    {
+      "name": "🔐 Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has success true', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.eql(true);",
+                  "});",
+                  "",
+                  "pm.test('Response has token', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.token).to.exist;",
+                  "    pm.environment.set('token', jsonData.data.token);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin@test.com\",\n    \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "Authentification et récupération du token"
+          }
+        },
+        {
+          "name": "Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "logout"]
+            }
+          }
+        },
+        {
+          "name": "Me (Profile)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has user data', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.id).to.exist;",
+                  "    pm.expect(jsonData.data.email).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "me"]
+            }
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"current_password\": \"password123\",\n    \"new_password\": \"newpassword123\",\n    \"new_password_confirmation\": \"newpassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/change-password",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "change-password"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "👥 Employes",
+      "item": [
+        {
+          "name": "List Employes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has data array', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/employes?per_page=15&search=&departement=",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "employes"],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "15"
+                },
+                {
+                  "key": "search",
+                  "value": ""
+                },
+                {
+                  "key": "departement",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Employe",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nom\": \"Dupont\",\n    \"prenom\": \"Jean\",\n    \"email\": \"jean.dupont@test.com\",\n    \"poste\": \"Développeur\",\n    \"departement\": \"IT\",\n    \"date_embauche\": \"2024-01-15\",\n    \"role_ids\": [4]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/employes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "employes"]
+            }
+          }
+        },
+        {
+          "name": "Get Employe",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/employes/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "employes", "1"]
+            }
+          }
+        },
+        {
+          "name": "Update Employe",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nom\": \"Dupont\",\n    \"prenom\": \"Jean\",\n    \"email\": \"jean.dupont@test.com\",\n    \"poste\": \"Senior Développeur\",\n    \"departement\": \"IT\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/employes/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "employes", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Employe",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/employes/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "employes", "1"]
+            }
+          }
+        },
+        {
+          "name": "Restore Employe",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/employes/1/restore",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "employes", "1", "restore"]
+            }
+          }
+        },
+        {
+          "name": "Upload Photo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "photo",
+                  "type": "file",
+                  "src": "/path/to/photo.jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/employes/1/photo",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "employes", "1", "photo"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏖️ Conges",
+      "item": [
+        {
+          "name": "List Conges",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/conges?statut=&type=&date_debut=&date_fin=&per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "conges"],
+              "query": [
+                {
+                  "key": "statut",
+                  "value": ""
+                },
+                {
+                  "key": "type",
+                  "value": ""
+                },
+                {
+                  "key": "date_debut",
+                  "value": ""
+                },
+                {
+                  "key": "date_fin",
+                  "value": ""
+                },
+                {
+                  "key": "per_page",
+                  "value": "15"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mes Conges",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/conges/mes-conges",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "conges", "mes-conges"]
+            }
+          }
+        },
+        {
+          "name": "Create Conge",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"type\": \"conge_paye\",\n    \"date_debut\": \"2024-08-01\",\n    \"date_fin\": \"2024-08-10\",\n    \"commentaire\": \"Vacances d'été\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/conges",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "conges"]
+            }
+          }
+        },
+        {
+          "name": "Get Conge",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/conges/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "conges", "1"]
+            }
+          }
+        },
+        {
+          "name": "Update Conge",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"type\": \"conge_paye\",\n    \"date_debut\": \"2024-08-05\",\n    \"date_fin\": \"2024-08-15\",\n    \"commentaire\": \"Vacances modifiées\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/conges/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "conges", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Conge",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/conges/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "conges", "1"]
+            }
+          }
+        },
+        {
+          "name": "Validate Conge",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"commentaire\": \"Validé - bonnes vacances !\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/conges/1/valider",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "conges", "1", "valider"]
+            }
+          }
+        },
+        {
+          "name": "Refuse Conge",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"motif_refus\": \"Manque de personnel sur cette période\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/conges/1/refuser",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "conges", "1", "refuser"]
+            }
+          }
+        },
+        {
+          "name": "Super Validation (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/conges/1/super-validation",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "conges", "1", "super-validation"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📄 Contrats",
+      "item": [
+        {
+          "name": "List Contrats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/contrats?type=&etat=&expirant_bientot=1&jours=30&per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "contrats"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": ""
+                },
+                {
+                  "key": "etat",
+                  "value": ""
+                },
+                {
+                  "key": "expirant_bientot",
+                  "value": "1"
+                },
+                {
+                  "key": "jours",
+                  "value": "30"
+                },
+                {
+                  "key": "per_page",
+                  "value": "15"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Contrat",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"employe_id\": 5,\n    \"type\": \"CDI\",\n    \"date_debut\": \"2024-01-01\",\n    \"salaire_base\": 3500.00,\n    \"poste\": \"Développeur\",\n    \"departement\": \"IT\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/contrats",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "contrats"]
+            }
+          }
+        },
+        {
+          "name": "Get Contrat",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/contrats/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "contrats", "1"]
+            }
+          }
+        },
+        {
+          "name": "Update Contrat",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"salaire_base\": 3800.00,\n    \"poste\": \"Senior Développeur\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/contrats/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "contrats", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Contrat",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/contrats/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "contrats", "1"]
+            }
+          }
+        },
+        {
+          "name": "Generate PDF",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/contrats/1/imprimer",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "contrats", "1", "imprimer"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔄 Validations",
+      "item": [
+        {
+          "name": "Get Validations History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/conges/1/validations",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "conges", "1", "validations"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔔 Notifications",
+      "item": [
+        {
+          "name": "List Notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notifications"]
+            }
+          }
+        },
+        {
+          "name": "Mark as Read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications/1/read",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notifications", "1", "read"]
+            }
+          }
+        },
+        {
+          "name": "Mark All as Read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications/read-all",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notifications", "read-all"]
+            }
+          }
+        },
+        {
+          "name": "Delete Notification",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notifications", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📊 Dashboard",
+      "item": [
+        {
+          "name": "Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "dashboard"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📈 Rapports",
+      "item": [
+        {
+          "name": "Rapport Conges",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/rapports/conges?date_debut=2024-01-01&date_fin=2024-12-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "rapports", "conges"],
+              "query": [
+                {
+                  "key": "date_debut",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "date_fin",
+                  "value": "2024-12-31"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Rapport Employes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/rapports/employes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "rapports", "employes"]
+            }
+          }
+        },
+        {
+          "name": "Export PDF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/rapports/conges/export/pdf?date_debut=2024-01-01&date_fin=2024-12-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "rapports", "conges", "export", "pdf"],
+              "query": [
+                {
+                  "key": "date_debut",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "date_fin",
+                  "value": "2024-12-31"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "⚙️ Parametres",
+      "item": [
+        {
+          "name": "List Parametres",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/parametres",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "parametres"]
+            }
+          }
+        },
+        {
+          "name": "Get Parametre",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/parametres/jours_conges_annuels",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "parametres", "jours_conges_annuels"]
+            }
+          }
+        },
+        {
+          "name": "Create/Update Parametre",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"cle\": \"jours_conges_annuels\",\n    \"valeur\": \"25\",\n    \"description\": \"Nombre de jours de congés annuels\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/parametres",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "parametres"]
+            }
+          }
+        },
+        {
+          "name": "Delete Parametre",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/parametres/jours_conges_annuels",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "parametres", "jours_conges_annuels"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "💰 FichesPaie",
+      "item": [
+        {
+          "name": "List Fiches Paie",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/fiches-paie?mois=1&annee=2024&per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "fiches-paie"],
+              "query": [
+                {
+                  "key": "mois",
+                  "value": "1"
+                },
+                {
+                  "key": "annee",
+                  "value": "2024"
+                },
+                {
+                  "key": "per_page",
+                  "value": "15"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Fiche Paie",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"employe_id\": 5,\n    \"mois\": 1,\n    \"annee\": 2024,\n    \"salaire_base\": 3000.00\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/fiches-paie",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "fiches-paie"]
+            }
+          }
+        },
+        {
+          "name": "Get Fiche Paie",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/fiches-paie/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "fiches-paie", "1"]
+            }
+          }
+        },
+        {
+          "name": "Update Fiche Paie",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"heures_sup\": 10,\n    \"absences\": 0\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/fiches-paie/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "fiches-paie", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Fiche Paie",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/fiches-paie/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "fiches-paie", "1"]
+            }
+          }
+        },
+        {
+          "name": "Generate PDF",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/fiches-paie/1/generer-pdf",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "fiches-paie", "1", "generer-pdf"]
+            }
+          }
+        },
+        {
+          "name": "Download PDF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/fiches-paie/1/pdf",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "fiches-paie", "1", "pdf"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔍 Global Search",
+      "item": [
+        {
+          "name": "Search Global",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/search?query=Dupont",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "search"],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "Dupont"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Search Employes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/search/employes?search=Dupont&departement=IT&per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "search", "employes"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "Dupont"
+                },
+                {
+                  "key": "departement",
+                  "value": "IT"
+                },
+                {
+                  "key": "per_page",
+                  "value": "15"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Pre-request script to ensure token is available"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost",
+      "type": "string",
+      "description": "Base URL of the API"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string",
+      "description": "Auth token (auto-populated after login)"
+    }
+  ]
+}
