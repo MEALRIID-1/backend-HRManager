@@ -27,7 +27,7 @@ class RolePermissionSeeder extends Seeder
                 }
 
                 // Admin a toutes les permissions
-                $adminRole->permissions()->attach(Permission::all()->pluck('id'));
+                $adminRole->permissions()->syncWithoutDetaching(Permission::all()->pluck('id'));
                 $this->command->info('✓ Permissions assignées à Admin');
 
                 // RH - Permissions étendues
@@ -46,7 +46,7 @@ class RolePermissionSeeder extends Seeder
                     'fiches_paie.voir', 'fiches_paie.creer', 'fiches_paie.telecharger',
                 ])->pluck('id');
                 $this->command->info("  RH permissions: " . $rhPermissions->count());
-                $rhRole->permissions()->attach($rhPermissions);
+                $rhRole->permissions()->syncWithoutDetaching($rhPermissions);
                 $this->command->info('✓ Permissions assignées à RH');
 
                 // Manager - Permissions limitées à son équipe
@@ -62,7 +62,7 @@ class RolePermissionSeeder extends Seeder
                     // Paramètres profil
                     'parametres.profil',
                 ])->pluck('id');
-                $managerRole->permissions()->attach($managerPermissions);
+                $managerRole->permissions()->syncWithoutDetaching($managerPermissions);
                 $this->command->info('✓ Permissions assignées à Manager');
 
                 // Employé - Permissions minimales
@@ -78,7 +78,7 @@ class RolePermissionSeeder extends Seeder
                     // Fiches de paie (voir/telecharger ses fiches)
                     'fiches_paie.voir', 'fiches_paie.telecharger',
                 ])->pluck('id');
-                $employeRole->permissions()->attach($employePermissions);
+                $employeRole->permissions()->syncWithoutDetaching($employePermissions);
                 $this->command->info('✓ Permissions assignées à Employé');
             });
         } catch (\Exception $e) {

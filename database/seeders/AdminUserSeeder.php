@@ -15,19 +15,21 @@ class AdminUserSeeder extends Seeder
     {
         $adminRole = Role::where('slug', 'admin')->first();
 
-        $admin = User::create([
-            'nom' => 'Administrateur',
-            'prenom' => 'Admin',
-            'email' => 'admin@hrmanager.local',
-            'mot_de_passe' => Hash::make('Admin@2024!'),
-            'matricule' => 'ADM-2024-0001',
-            'poste' => 'Administrateur Système',
-            'departement' => 'IT',
-            'date_embauche' => now(),
-            'dernier_changement_password' => now(),
-        ]);
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@hrmanager.local'],
+            [
+                'nom' => 'Administrateur',
+                'prenom' => 'Admin',
+                'mot_de_passe' => Hash::make('Admin@2024!'),
+                'matricule' => 'ADM-2024-0001',
+                'poste' => 'Administrateur Système',
+                'departement' => 'IT',
+                'date_embauche' => now(),
+                'dernier_changement_password' => now(),
+            ]
+        );
 
-        $admin->roles()->attach($adminRole->id);
+        $admin->roles()->syncWithoutDetaching($adminRole->id);
 
         $this->command->info('Admin user created: admin@hrmanager.local / Admin@2024!');
     }

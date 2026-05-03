@@ -60,8 +60,11 @@ class PermissionSeeder extends Seeder
                 ];
 
                 foreach ($permissions as $permData) {
-                    Permission::create($permData);
-                    $this->command->info("✓ Permission créée : {$permData['slug']}");
+                    Permission::updateOrCreate(
+                        ['slug' => $permData['slug']],
+                        $permData
+                    );
+                    $this->command->info("✓ Permission créée/mise à jour : {$permData['slug']}");
                 }
             });
         } catch (\Exception $e) {
