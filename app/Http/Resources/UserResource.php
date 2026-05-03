@@ -27,10 +27,13 @@ class UserResource extends JsonResource
             'date_embauche' => $this->date_embauche?->format('Y-m-d'),
             'iban' => $this->iban,
             'is_active' => $this->is_active,
+            'statut' => $this->is_active ? 'actif' : 'inactif',
+            'role_slug' => $this->roles->first()?->slug,
             'roles' => $this->whenLoaded('roles', function () {
                 return $this->roles->map(fn ($role) => [
                     'id' => $role->id,
                     'nom' => $role->nom,
+                    'slug' => $role->slug,  // ✅ Ajout du slug pour le frontend
                     'niveau_hierarchique' => $role->niveau_hierarchique,
                 ]);
             }),

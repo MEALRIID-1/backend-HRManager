@@ -60,14 +60,12 @@ class AuthService
                 // Logger l'activité
                 ActivityLog::create([
                     'user_id' => $user->id,
-                    'user_name' => $user->nom . ' ' . $user->prenom,
                     'action' => 'login',
+                    'entity_name' => 'auth',
+                    'entity_id' => $user->id,
                     'module' => 'auth',
-                    'description' => 'Connexion utilisateur',
+                    'timestamp' => now(),
                     'ip_address' => request()->ip(),
-                    'user_agent' => request()->userAgent(),
-                    'reference_id' => $user->id,
-                    'reference_type' => 'App\Models\User',
                 ]);
 
                 return [
@@ -97,14 +95,12 @@ class AuthService
 
                 ActivityLog::create([
                     'user_id' => $user->id,
-                    'user_name' => $user->nom . ' ' . $user->prenom,
                     'action' => 'logout',
+                    'entity_name' => 'auth',
+                    'entity_id' => $user->id,
                     'module' => 'auth',
-                    'description' => 'Déconnexion utilisateur',
+                    'timestamp' => now(),
                     'ip_address' => request()->ip(),
-                    'user_agent' => request()->userAgent(),
-                    'reference_id' => $user->id,
-                    'reference_type' => 'App\Models\User',
                 ]);
             });
         } catch (\Exception $e) {
@@ -127,7 +123,6 @@ class AuthService
             return [
                 'id' => $role->id,
                 'nom' => $role->nom,
-                'slug' => $role->slug,
                 'niveau_hierarchique' => $role->niveau_hierarchique,
             ];
         });

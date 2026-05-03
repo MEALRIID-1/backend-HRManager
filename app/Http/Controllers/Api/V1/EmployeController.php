@@ -36,6 +36,9 @@ class EmployeController extends Controller
             $currentUser = $request->user();
 
             $employes = $this->employeService->list($filters, $currentUser, $perPage);
+            
+            // ✅ Charger les relations roles pour chaque employé
+            $employes->load('roles');
 
             return response()->json([
                 'success' => true,
@@ -51,145 +54,153 @@ class EmployeController extends Controller
             Log::error('Erreur liste employés: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Une erreur est survenue',
+                'message' => 'Une erreur est survenue: ' . $e->getMessage(),
             ], 500);
         }
     }
 
-    /**
-     * Créer un employé avec génération automatique de mot de passe.
-     *
-     * @throws ValidationException
-     */
-    public function store(StoreEmployeRequest $request): JsonResponse
-    {
-        try {
-            $employe = $this->employeService->createEmploye($request->validated());
+    //**
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Employé créé avec succès. Un mot de passe temporaire a été généré.',
-                'data' => new UserResource($employe),
-            ], 201);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur de validation',
-                'errors' => $e->errors(),
-            ], 422);
-        } catch (\Exception $e) {
-            Log::error('Erreur création employé: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Une erreur est survenue',
-            ], 500);
-        }
+public function store(StoreEmployeRequest $request): JsonResponse
+{
+    try {
+        $employe = $this->employeService->createEmploye($request->validated());
+        
+        // ✅ IMPORTANT: Recharger les relations après la création
+        $employe->load('roles');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Employé créé avec succès. Un mot de passe temporaire a été généré.',
+            'data' => new UserResource($employe),
+        ], 201);
+    } catch (ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Erreur de validation',
+            'errors' => $e->errors(),
+        ], 422);
+    } catch (\Exception $e) {
+        Log::error('Erreur création employé: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Une erreur est survenue: ' . $e->getMessage(),
+        ], 500);
     }
+}
 
-    /**
-     * Afficher un employé avec détails complets (contrat actif, solde congés, rôles).
-     */
-    public function show(int $id): JsonResponse
-    {
-        try {
-            $employe = $this->employeService->getEmployeWithDetails($id);
+   /**
+ * Afficher un employé avec détails complets (contrat actif, solde congés, rôles).
+ */
+public function show($id): JsonResponse  // ✅ Retirer le typage int
+{
+    try {
+        $id = (int) $id;  // ✅ Convertir en entier
+        $employe = $this->employeService->getEmployeWithDetails($id);
 
-            if (!$employe) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Employé non trouvé',
-                ], 404);
-            }
-
-            // Ajouter le solde de congés et le contrat actif
-            $soldeConges = $this->employeService->calculerSoldeConges($employe);
-            $contratActif = $this->employeService->getContratActif($employe);
-
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'employe' => new UserResource($employe),
-                    'solde_conges' => $soldeConges,
-                    'contrat_actif' => $contratActif,
-                ],
-            ], 200);
-        } catch (\Exception $e) {
-            Log::error('Erreur affichage employé: ' . $e->getMessage());
+        if (!$employe) {
             return response()->json([
                 'success' => false,
-                'message' => 'Une erreur est survenue',
-            ], 500);
+                'message' => 'Employé non trouvé',
+            ], 404);
         }
+
+        // ✅ Charger les relations roles
+        $employe->load('roles');
+
+        // Ajouter le solde de congés et le contrat actif
+        $soldeConges = $this->employeService->calculerSoldeConges($employe);
+        $contratActif = $this->employeService->getContratActif($employe);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'employe' => new UserResource($employe),
+                'solde_conges' => $soldeConges,
+                'contrat_actif' => $contratActif,
+            ],
+        ], 200);
+    } catch (\Exception $e) {
+        Log::error('Erreur affichage employé: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Une erreur est survenue',
+        ], 500);
     }
+}
+/**
+ * Modifier un employé avec logs d'activité (old_value/new_value).
+ *
+ * @throws ValidationException
+ */
+public function update(UpdateEmployeRequest $request, $id): JsonResponse  // ✅ Retirer typage int
+{
+    try {
+        $id = (int) $id;  // ✅ Convertir en entier
+        $employe = User::find($id);
 
-    /**
-     * Modifier un employé avec logs d'activité (old_value/new_value).
-     *
-     * @throws ValidationException
-     */
-    public function update(UpdateEmployeRequest $request, int $id): JsonResponse
-    {
-        try {
-            $employe = User::find($id);
-
-            if (!$employe) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Employé non trouvé',
-                ], 404);
-            }
-
-            $employe = $this->employeService->update($employe, $request->validated());
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Employé mis à jour avec succès',
-                'data' => new UserResource($employe),
-            ], 200);
-        } catch (ValidationException $e) {
+        if (!$employe) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur de validation',
-                'errors' => $e->errors(),
-            ], 422);
-        } catch (\Exception $e) {
-            Log::error('Erreur mise à jour employé: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Une erreur est survenue',
-            ], 500);
+                'message' => 'Employé non trouvé',
+            ], 404);
         }
+
+        $employe = $this->employeService->update($employe, $request->validated());
+        
+        // ✅ Charger les relations
+        $employe->load('roles');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Employé mis à jour avec succès',
+            'data' => new UserResource($employe),
+        ], 200);
+    } catch (ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Erreur de validation',
+            'errors' => $e->errors(),
+        ], 422);
+    } catch (\Exception $e) {
+        Log::error('Erreur mise à jour employé: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Une erreur est survenue',
+        ], 500);
     }
+}
 
-    /**
-     * Soft delete d'un employé.
-     */
-    public function destroy(int $id): JsonResponse
-    {
-        try {
-            $employe = User::find($id);
+/**
+ * Soft delete d'un employé.
+ */
+public function destroy($id): JsonResponse  // ✅ Retirer typage int
+{
+    try {
+        $id = (int) $id;  // ✅ Convertir en entier
+        $employe = User::find($id);
 
-            if (!$employe) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Employé non trouvé',
-                ], 404);
-            }
-
-            $this->employeService->destroy($employe);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Employé déplacé vers la corbeille',
-            ], 200);
-        } catch (\Exception $e) {
-            Log::error('Erreur suppression employé: ' . $e->getMessage());
+        if (!$employe) {
             return response()->json([
                 'success' => false,
-                'message' => 'Une erreur est survenue',
-            ], 500);
+                'message' => 'Employé non trouvé',
+            ], 404);
         }
+
+        $this->employeService->destroy($employe);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Employé déplacé vers la corbeille',
+        ], 200);
+    } catch (\Exception $e) {
+        Log::error('Erreur suppression employé: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Une erreur est survenue',
+        ], 500);
     }
+}
 
     /**
      * Restaurer un employé supprimé (corbeille).
@@ -198,6 +209,9 @@ class EmployeController extends Controller
     {
         try {
             $employe = $this->employeService->restore($id);
+            
+            // ✅ Charger les relations
+            $employe->load('roles');
 
             return response()->json([
                 'success' => true,
@@ -221,6 +235,9 @@ class EmployeController extends Controller
         try {
             $perPage = $request->integer('per_page', 15);
             $employes = $this->employeService->trashed($perPage);
+            
+            // ✅ Charger les relations roles
+            $employes->load('roles');
 
             return response()->json([
                 'success' => true,
@@ -298,6 +315,29 @@ class EmployeController extends Controller
             ], 422);
         } catch (\Exception $e) {
             Log::error('Erreur upload photo: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Une erreur est survenue',
+            ], 500);
+        }
+    }
+    
+    /**
+     * Récupérer la liste des rôles disponibles.
+     */
+    public function getRoles(): JsonResponse
+    {
+        try {
+            $roles = \App\Models\Role::select('id', 'nom', 'slug', 'niveau_hierarchique')
+                ->whereIn('slug', ['admin', 'rh', 'manager', 'employe'])
+                ->get();
+            
+            return response()->json([
+                'success' => true,
+                'data' => $roles,
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Erreur récupération rôles: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Une erreur est survenue',

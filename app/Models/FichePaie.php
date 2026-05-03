@@ -24,6 +24,7 @@ class FichePaie extends Model
         'salaire_net',
         'heures_travaillees',
         'heures_supplementaires',
+        'absences',
         'montant_heures_sup',
         'prime_anciennete',
         'prime_productivite',
@@ -36,16 +37,17 @@ class FichePaie extends Model
 
     protected $casts = [
         'date_emission' => 'date',
-        'salaire_brut' => 'float',
-        'salaire_net' => 'float',
-        'heures_travaillees' => 'float',
-        'heures_supplementaires' => 'float',
-        'montant_heures_sup' => 'float',
-        'prime_anciennete' => 'float',
-        'prime_productivite' => 'float',
-        'prime_autres' => 'float',
-        'total_cotisations' => 'float',
-        'total_retenues' => 'float',
+        'salaire_brut' => 'decimal:2',
+        'salaire_net' => 'decimal:2',
+        'heures_travaillees' => 'decimal:2',
+        'heures_supplementaires' => 'decimal:2',
+        'absences' => 'decimal:2',
+        'montant_heures_sup' => 'decimal:2',
+        'prime_anciennete' => 'decimal:2',
+        'prime_productivite' => 'decimal:2',
+        'prime_autres' => 'decimal:2',
+        'total_cotisations' => 'decimal:2',
+        'total_retenues' => 'decimal:2',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
@@ -55,6 +57,7 @@ class FichePaie extends Model
     {
         return $this->belongsTo(User::class, 'user_id', 'id');
     }
+
     /**
      * Accessor pour employe_id (alias pour user_id)
      */
@@ -63,4 +66,19 @@ class FichePaie extends Model
         return $this->user_id;
     }
 
+    /**
+     * Récupérer le mois à partir de la période
+     */
+    public function getMoisAttribute(): int
+    {
+        return (int) explode('-', $this->periode)[1];
+    }
+
+    /**
+     * Récupérer l'année à partir de la période
+     */
+    public function getAnneeAttribute(): int
+    {
+        return (int) explode('-', $this->periode)[0];
+    }
 }

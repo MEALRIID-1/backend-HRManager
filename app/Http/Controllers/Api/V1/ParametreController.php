@@ -56,7 +56,7 @@ class ParametreController extends Controller
                 'data' => $data,
             ]);
         } catch (\Exception $e) {
-            Log::error('Erreur récupération références: ' . $e->getMessage());
+            Log::error('Erreur r+�cup+�ration r+�f+�rences: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Une erreur est survenue',
@@ -81,7 +81,7 @@ class ParametreController extends Controller
                 ],
             ]);
         } catch (\Exception $e) {
-            Log::error('Erreur récupération rôles/permissions: ' . $e->getMessage());
+            Log::error('Erreur r+�cup+�ration r+�les/permissions: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Une erreur est survenue',
@@ -110,7 +110,59 @@ class ParametreController extends Controller
                 'data' => $config,
             ]);
         } catch (\Exception $e) {
-            Log::error('Erreur récupération config: ' . $e->getMessage());
+            Log::error('Erreur r+�cup+�ration config: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Une erreur est survenue',
+            ], 500);
+        }
+    }
+
+    /**
+     * Récupérer son propre profil.
+     */
+    public function getProfil(Request $request): JsonResponse
+    {
+        try {
+            $user = $request->user();
+            return response()->json([
+                'success' => true,
+                'data' => new UserResource($user),
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Erreur récupération profil: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Une erreur est survenue',
+            ], 500);
+        }
+    }
+
+    /**
+     * Liste des départements disponibles pour les sélecteurs.
+     */
+    public function getDepartements(): JsonResponse
+    {
+        try {
+            $departements = User::query()
+                ->whereNotNull('departement')
+                ->where('departement', '!=', '')
+                ->distinct()
+                ->orderBy('departement')
+                ->pluck('departement')
+                ->values()
+                ->map(fn (string $departement, int $index) => [
+                    'id' => $index + 1,
+                    'nom' => $departement,
+                ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $departements,
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Erreur récupération départements: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Une erreur est survenue',
@@ -128,7 +180,7 @@ class ParametreController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Cache effacé avec succès',
+                'message' => 'Cache effac+� avec succ+�s',
             ]);
         } catch (\Exception $e) {
             Log::error('Erreur effacement cache: ' . $e->getMessage());
@@ -140,7 +192,7 @@ class ParametreController extends Controller
     }
 
     /**
-     * Liste tous les rôles avec leurs permissions.
+     * Liste tous les r+�les avec leurs permissions.
      */
     public function getRoles(): JsonResponse
     {
@@ -152,7 +204,7 @@ class ParametreController extends Controller
                 'data' => RoleResource::collection($roles),
             ], 200);
         } catch (\Exception $e) {
-            Log::error('Erreur récupération rôles: ' . $e->getMessage());
+            Log::error('Erreur r+�cup+�ration r+�les: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Une erreur est survenue',
@@ -161,7 +213,7 @@ class ParametreController extends Controller
     }
 
     /**
-     * Créer un nouveau rôle.
+     * Cr+�er un nouveau r+�le.
      */
     public function createRole(StoreRoleRequest $request): JsonResponse
     {
@@ -170,11 +222,11 @@ class ParametreController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Rôle créé avec succès',
+                'message' => 'R+�le cr+�+� avec succ+�s',
                 'data' => new RoleResource($role->load('permissions')),
             ], 201);
         } catch (\Exception $e) {
-            Log::error('Erreur création rôle: ' . $e->getMessage());
+            Log::error('Erreur cr+�ation r+�le: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Une erreur est survenue',
@@ -183,7 +235,7 @@ class ParametreController extends Controller
     }
 
     /**
-     * Modifier un rôle.
+     * Modifier un r+�le.
      */
     public function updateRole(UpdateRoleRequest $request, int $id): JsonResponse
     {
@@ -193,7 +245,7 @@ class ParametreController extends Controller
             if (!$role) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Rôle non trouvé',
+                    'message' => 'R+�le non trouv+�',
                 ], 404);
             }
 
@@ -201,11 +253,11 @@ class ParametreController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Rôle mis à jour avec succès',
+                'message' => 'R+�le mis +� jour avec succ+�s',
                 'data' => new RoleResource($role),
             ], 200);
         } catch (\Exception $e) {
-            Log::error('Erreur mise à jour rôle: ' . $e->getMessage());
+            Log::error('Erreur mise +� jour r+�le: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Une erreur est survenue',
@@ -214,7 +266,7 @@ class ParametreController extends Controller
     }
 
     /**
-     * Supprimer un rôle (soft delete).
+     * Supprimer un r+�le (soft delete).
      */
     public function deleteRole(int $id): JsonResponse
     {
@@ -224,7 +276,7 @@ class ParametreController extends Controller
             if (!$role) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Rôle non trouvé',
+                    'message' => 'R+�le non trouv+�',
                 ], 404);
             }
 
@@ -232,10 +284,10 @@ class ParametreController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Rôle supprimé avec succès',
+                'message' => 'R+�le supprim+� avec succ+�s',
             ], 200);
         } catch (\Exception $e) {
-            Log::error('Erreur suppression rôle: ' . $e->getMessage());
+            Log::error('Erreur suppression r+�le: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Une erreur est survenue',
@@ -244,7 +296,7 @@ class ParametreController extends Controller
     }
 
     /**
-     * Liste toutes les permissions groupées par module.
+     * Liste toutes les permissions group+�es par module.
      */
     public function getPermissions(): JsonResponse
     {
@@ -256,7 +308,7 @@ class ParametreController extends Controller
                 'data' => $permissions,
             ], 200);
         } catch (\Exception $e) {
-            Log::error('Erreur récupération permissions: ' . $e->getMessage());
+            Log::error('Erreur r+�cup+�ration permissions: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Une erreur est survenue',
@@ -265,7 +317,7 @@ class ParametreController extends Controller
     }
 
     /**
-     * Assigner des permissions à un rôle.
+     * Assigner des permissions +� un r+�le.
      */
     public function assignPermissionsToRole(Request $request, int $roleId): JsonResponse
     {
@@ -280,7 +332,7 @@ class ParametreController extends Controller
             if (!$role) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Rôle non trouvé',
+                    'message' => 'R+�le non trouv+�',
                 ], 404);
             }
 
@@ -288,7 +340,7 @@ class ParametreController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Permissions assignées avec succès',
+                'message' => 'Permissions assign+�es avec succ+�s',
                 'data' => new RoleResource($role->fresh('permissions')),
             ], 200);
         } catch (\Exception $e) {
@@ -301,7 +353,7 @@ class ParametreController extends Controller
     }
 
     /**
-     * Assigner un rôle à un employé.
+     * Assigner un r+�le +� un employ+�.
      */
     public function assignRoleToUser(Request $request, int $userId): JsonResponse
     {
@@ -315,7 +367,7 @@ class ParametreController extends Controller
             if (!$user) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Utilisateur non trouvé',
+                    'message' => 'Utilisateur non trouv+�',
                 ], 404);
             }
 
@@ -323,11 +375,11 @@ class ParametreController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Rôle assigné avec succès',
+                'message' => 'R+�le assign+� avec succ+�s',
                 'data' => new UserResource($user->fresh('roles')),
             ], 200);
         } catch (\Exception $e) {
-            Log::error('Erreur assignation rôle: ' . $e->getMessage());
+            Log::error('Erreur assignation r+�le: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Une erreur est survenue',
@@ -336,7 +388,7 @@ class ParametreController extends Controller
     }
 
     /**
-     * Retirer un rôle à un employé.
+     * Retirer un r+�le +� un employ+�.
      */
     public function revokeRoleFromUser(Request $request, int $userId): JsonResponse
     {
@@ -350,7 +402,7 @@ class ParametreController extends Controller
             if (!$user) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Utilisateur non trouvé',
+                    'message' => 'Utilisateur non trouv+�',
                 ], 404);
             }
 
@@ -358,11 +410,11 @@ class ParametreController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Rôle retiré avec succès',
+                'message' => 'R+�le retir+� avec succ+�s',
                 'data' => new UserResource($user->fresh('roles')),
             ], 200);
         } catch (\Exception $e) {
-            Log::error('Erreur révocation rôle: ' . $e->getMessage());
+            Log::error('Erreur r+�vocation r+�le: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Une erreur est survenue',
@@ -371,7 +423,7 @@ class ParametreController extends Controller
     }
 
     /**
-     * Mettre à jour son propre profil.
+     * Mettre +� jour son propre profil.
      */
     public function updateProfil(UpdateProfilRequest $request): JsonResponse
     {
@@ -381,11 +433,11 @@ class ParametreController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Profil mis à jour avec succès',
+                'message' => 'Profil mis +� jour avec succ+�s',
                 'data' => new UserResource($user),
             ], 200);
         } catch (\Exception $e) {
-            Log::error('Erreur mise à jour profil: ' . $e->getMessage());
+            Log::error('Erreur mise +� jour profil: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Une erreur est survenue',
@@ -408,7 +460,7 @@ class ParametreController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Photo de profil mise à jour',
+                'message' => 'Photo de profil mise +� jour',
                 'data' => [
                     'photo_url' => $user->photo_profil ? Storage::disk('public')->url($user->photo_profil) : null,
                 ],
@@ -441,7 +493,7 @@ class ParametreController extends Controller
                 'data' => $status,
             ], $allHealthy ? 200 : 503);
         } catch (\Exception $e) {
-            Log::error('Erreur vérification santé: ' . $e->getMessage());
+            Log::error('Erreur v+�rification sant+�: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Une erreur est survenue',
@@ -467,10 +519,10 @@ class ParametreController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Configuration mise à jour',
+                'message' => 'Configuration mise +� jour',
             ]);
         } catch (\Exception $e) {
-            Log::error('Erreur mise à jour config: ' . $e->getMessage());
+            Log::error('Erreur mise +� jour config: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Une erreur est survenue',

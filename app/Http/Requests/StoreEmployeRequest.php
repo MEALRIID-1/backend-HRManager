@@ -31,6 +31,7 @@ class StoreEmployeRequest extends FormRequest
             'iban' => ['nullable', 'string', 'max:34'],
             'role_ids' => ['nullable', 'array'],
             'role_ids.*' => ['integer', 'exists:roles,id'],
+            'mot_de_passe' => ['nullable', 'string', 'min:8'],
         ];
     }
 

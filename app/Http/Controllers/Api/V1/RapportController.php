@@ -5,15 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\ActivityLogResource;
-use App\Http\Resources\CongeResource;
-use App\Http\Resources\UserResource;
 use App\Services\RapportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Cache;
 
 class RapportController extends Controller
@@ -46,7 +42,7 @@ class RapportController extends Controller
                     'statistiques' => $data['statistiques'],
                     'par_type' => $data['par_type'],
                     'par_departement' => $data['par_departement'],
-                    'conges' => CongeResource::collection($data['conges']),
+                    'conges' => $data['conges'],
                     'filtres_appliques' => $data['filtres_appliques'],
                 ],
             ], 200);
@@ -80,7 +76,7 @@ class RapportController extends Controller
                     'periode' => $data['periode'],
                     'statistiques' => $data['statistiques'],
                     'par_departement' => $data['par_departement'],
-                    'employes' => UserResource::collection($data['employes']),
+                    'employes' => $data['employes'],
                     'filtres_appliques' => $data['filtres_appliques'],
                 ],
             ], 200);
@@ -125,7 +121,7 @@ class RapportController extends Controller
                     'par_entite' => $data['par_entite'],
                     'par_action' => $data['par_action'],
                     'par_utilisateur' => $data['par_utilisateur'],
-                    'activites' => ActivityLogResource::collection($data['activites']),
+                    'activites' => $data['activites'],
                     'filtres_appliques' => $data['filtres_appliques'],
                 ],
             ], 200);
@@ -186,13 +182,74 @@ class RapportController extends Controller
                 default => throw new \InvalidArgumentException("Type de rapport inconnu: {$type}"),
             };
 
-            $filename = "rapport_{$type}_" . now()->format('Ymd_His') . '.xlsx';
+            $filename = "rapport_{$type}_" . now()->format('Ymd_His') . '.csv';
 
-            // Utiliser Maatwebsite Excel pour générer le fichier
-            return Excel::download(
-                new \App\Exports\RapportExport($type, $data),
-                $filename
-            );
+            return response()->streamDownload(function () use ($type, $data) {
+                $output = fopen('php://output', 'w');
+
+                fwrite($output, "\xEF\xBB\xBF");
+
+                switch ($type) {
+                    case 'conges':
+                        fputcsv($output, ['ID', 'Employe', 'Type', 'Date debut', 'Date fin', 'Nombre jours', 'Statut', 'Commentaire'], ';');
+                        foreach (($data['conges'] ?? []) as $conge) {
+                            $employeNom = '';
+                            if (isset($conge->employe)) {
+                                $employeNom = trim(($conge->employe->prenom ?? '') . ' ' . ($conge->employe->nom ?? ''));
+                            }
+                            fputcsv($output, [
+                                $conge->id ?? '',
+                                $employeNom,
+                                $conge->type ?? '',
+                                $conge->date_debut ? $conge->date_debut->format('d/m/Y') : '',
+                                $conge->date_fin ? $conge->date_fin->format('d/m/Y') : '',
+                                $conge->nombre_jours ?? '',
+                                $conge->statut ?? '',
+                                $conge->commentaire ?? '',
+                            ], ';');
+                        }
+                        break;
+
+                    case 'employes':
+                        fputcsv($output, ['ID', 'Prenom', 'Nom', 'Departement', 'Date embauche', 'Salaire', 'Actif'], ';');
+                        foreach (($data['employes'] ?? []) as $employe) {
+                            fputcsv($output, [
+                                $employe->id ?? '',
+                                $employe->prenom ?? '',
+                                $employe->nom ?? '',
+                                $employe->departement ?? '',
+                                $employe->date_embauche ? $employe->date_embauche->format('d/m/Y') : '',
+                                $employe->salaire ?? '',
+                                !empty($employe->is_active) ? 'Oui' : 'Non',
+                            ], ';');
+                        }
+                        break;
+
+                    case 'activite':
+                        fputcsv($output, ['ID', 'Utilisateur', 'Action', 'Entite', 'Valeur avant', 'Valeur apres', 'IP', 'Date/Heure'], ';');
+                        foreach (($data['activites'] ?? []) as $activite) {
+                            $userNom = '';
+                            if (isset($activite->user)) {
+                                $userNom = trim(($activite->user->prenom ?? '') . ' ' . ($activite->user->nom ?? ''));
+                            }
+                            fputcsv($output, [
+                                $activite->id ?? '',
+                                $userNom,
+                                $activite->action ?? '',
+                                $activite->entite ?? '',
+                                isset($activite->valeur_avant) ? json_encode($activite->valeur_avant, JSON_UNESCAPED_UNICODE) : '',
+                                isset($activite->valeur_apres) ? json_encode($activite->valeur_apres, JSON_UNESCAPED_UNICODE) : '',
+                                $activite->ip_address ?? '',
+                                $activite->created_at ? $activite->created_at->format('d/m/Y H:i:s') : '',
+                            ], ';');
+                        }
+                        break;
+                }
+
+                fclose($output);
+            }, $filename, [
+                'Content-Type' => 'text/csv; charset=UTF-8',
+            ]);
         } catch (\Exception $e) {
             Log::error('Erreur export Excel: ' . $e->getMessage());
             return response()->json([

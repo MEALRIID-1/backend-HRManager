@@ -27,10 +27,10 @@ class NotificationService
         try {
             return DB::transaction(function () use ($userId, $type, $message) {
                 return Notification::create([
-                    'user_id' => $userId,
-                    'type' => $type,
-                    'message' => $message,
-                    'statut' => 'non_lue',
+                    'user_id'    => $userId,
+                    'type'       => $type,
+                    'message'    => $message,
+                    'lu'         => false,
                     'date_envoi' => now(),
                 ]);
             });
@@ -56,20 +56,17 @@ class NotificationService
             })->get();
 
             foreach ($managers as $manager) {
-                // Notification en base de données (toujours prioritaire)
                 $this->notifier(
                     $manager->id,
                     'validation_requise_n1',
                     "Nouvelle demande de congé à valider (N1) de {$conge->employe->nom} {$conge->employe->prenom} - Du {$conge->date_debut->format('d/m/Y')} au {$conge->date_fin->format('d/m/Y')}"
                 );
 
-                // Envoi email via queue (optionnel, avec gestion d'erreur)
                 try {
                     $email = new CongeDeposeMail($conge, $manager, $conge->employe);
                     EnvoyerEmailJob::dispatch($email, $manager->email, $manager->prenom . ' ' . $manager->nom);
                 } catch (\Exception $emailException) {
                     Log::warning('Échec envoi email congé déposé (manager): ' . $emailException->getMessage());
-                    // On continue, la notification BD est prioritaire
                 }
             }
 
@@ -141,7 +138,6 @@ class NotificationService
                 $message
             );
 
-            // Envoi email à l'employé (uniquement si validation finale N3 ou pour info)
             try {
                 $decision = ($niveau === 'N3') ? 'approuve' : 'partiellement_valide';
                 $email = new CongeDecisionMail($conge, $conge->employe, $decision, null, $validateur);
@@ -168,7 +164,6 @@ class NotificationService
                 "Votre demande de congé du {$conge->date_debut->format('d/m/Y')} au {$conge->date_fin->format('d/m/Y')} a été refusée. Motif: {$motif}"
             );
 
-            // Envoi email de refus à l'employé
             try {
                 $email = new CongeDecisionMail($conge, $conge->employe, 'refuse', $motif, $refuseur);
                 EnvoyerEmailJob::dispatch($email, $conge->employe->email, $conge->employe->prenom . ' ' . $conge->employe->nom);
@@ -194,7 +189,6 @@ class NotificationService
                 "Un nouveau contrat de type {$contrat->type} a été créé pour vous, prenant effet le {$contrat->date_debut->format('d/m/Y')}."
             );
 
-            // Envoi email de notification de contrat
             try {
                 $email = new ContratCreeMail($contrat, $contrat->employe);
                 EnvoyerEmailJob::dispatch($email, $contrat->employe->email, $contrat->employe->prenom . ' ' . $contrat->employe->nom);
@@ -218,7 +212,6 @@ class NotificationService
                 "Bienvenue ! Votre compte a été créé. Votre mot de passe temporaire est: {$password}. Veuillez le changer lors de votre première connexion."
             );
 
-            // Envoi email avec mot de passe temporaire
             try {
                 $email = new PasswordTemporaireEmail($employe, $password);
                 EnvoyerEmailJob::dispatch($email, $employe->email, $employe->prenom . ' ' . $employe->nom);
@@ -236,7 +229,7 @@ class NotificationService
     public function markAsRead(Notification $notification): void
     {
         try {
-            $notification->update(['statut' => 'lue', 'date_lecture' => now()]);
+            $notification->update(['lu' => true, 'date_lecture' => now()]);
         } catch (\Exception $e) {
             Log::error('Erreur lors du marquage de la notification: ' . $e->getMessage());
             throw $e;
@@ -250,8 +243,8 @@ class NotificationService
     {
         try {
             return Notification::where('user_id', $userId)
-                ->where('statut', 'non_lue')
-                ->update(['statut' => 'lue', 'date_lecture' => now()]);
+                ->where('lu', false)
+                ->update(['lu' => true, 'date_lecture' => now()]);
         } catch (\Exception $e) {
             Log::error('Erreur lors du marquage de toutes les notifications: ' . $e->getMessage());
             throw $e;
@@ -264,7 +257,7 @@ class NotificationService
     public function getUnreadCount(int $userId): int
     {
         return Notification::where('user_id', $userId)
-            ->where('statut', 'non_lue')
+            ->where('lu', false)
             ->count();
     }
 
@@ -274,8 +267,8 @@ class NotificationService
     public function getNotifications(int $userId, int $perPage = 15): \Illuminate\Pagination\LengthAwarePaginator
     {
         return Notification::where('user_id', $userId)
-            ->orderByRaw("CASE WHEN statut = 'non_lue' THEN 0 ELSE 1 END")
-            ->orderBy('date_envoi', 'desc')
+            ->orderByRaw("CASE WHEN lu = 0 THEN 0 ELSE 1 END")
+            ->orderBy('created_at', 'desc')
             ->paginate($perPage);
     }
 

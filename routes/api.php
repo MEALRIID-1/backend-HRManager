@@ -49,8 +49,8 @@ Route::prefix('v1/employes')
     ->middleware(['auth:sanctum'])
     ->group(function () {
         // Corbeille (doit être avant /{id})
-        Route::middleware(['role:admin,RH'])->group(function () {
-            Route::get('/trashed/list', [EmployeController::class, 'trashed']);
+        Route::middleware(['role:admin,rh'])->group(function () {
+            Route::get('/trashed', [EmployeController::class, 'trashed']);
         });
 
         // Routes accessibles à tous les utilisateurs authentifiés
@@ -58,7 +58,7 @@ Route::prefix('v1/employes')
         Route::get('/{id}', [EmployeController::class, 'show']);
 
         // Routes admin et RH uniquement
-        Route::middleware(['role:admin,RH'])->group(function () {
+        Route::middleware(['role:admin,rh'])->group(function () {
             Route::post('/', [EmployeController::class, 'store']);
             Route::put('/{id}', [EmployeController::class, 'update']);
             Route::post('/{id}/upload-photo', [EmployeController::class, 'uploadPhoto']);
@@ -66,7 +66,7 @@ Route::prefix('v1/employes')
         });
 
         // Soft delete (admin, RH, manager)
-        Route::middleware(['role:admin,RH,manager'])->group(function () {
+        Route::middleware(['role:admin,rh,manager'])->group(function () {
             Route::delete('/{id}', [EmployeController::class, 'destroy']);
         });
 
@@ -74,6 +74,29 @@ Route::prefix('v1/employes')
         Route::middleware(['role:admin'])->group(function () {
             Route::delete('/{id}/force', [EmployeController::class, 'forceDelete']);
         });
+    });
+
+Route::prefix('v1')
+    ->middleware(['auth:sanctum'])
+    ->group(function () {
+        Route::get('/departements', [ParametreController::class, 'getDepartements']);
+        Route::get('/user', [ParametreController::class, 'getProfil']);
+        
+        // Routes profil - accessibles à tous les utilisateurs authentifiés
+        Route::prefix('/parametres/profil')->group(function () {
+            Route::get('/', [ParametreController::class, 'getProfil']);
+            Route::put('/', [ParametreController::class, 'updateProfil']);
+            Route::post('/photo', [ParametreController::class, 'uploadPhotoProfil']);
+        });
+    });
+
+
+    
+   // ✅ ROUTE POUR LES RÔLES
+    Route::prefix('v1')
+        ->middleware(['auth:sanctum'])
+        ->group(function () {
+            Route::get('/roles', [EmployeController::class, 'getRoles']);
     });
 
 /*
@@ -86,8 +109,8 @@ Route::prefix('v1/conges')
     ->middleware(['auth:sanctum'])
     ->group(function () {
         // Corbeille (doit être avant /{id})
-        Route::middleware(['role:admin,RH'])->group(function () {
-            Route::get('/trashed/list', [CongeController::class, 'trashed']);
+        Route::middleware(['role:admin,rh'])->group(function () {
+            Route::get('/trashed', [CongeController::class, 'trashed']);
         });
 
         // Routes accessibles à tous les utilisateurs authentifiés
@@ -102,12 +125,12 @@ Route::prefix('v1/conges')
         Route::delete('/{id}', [CongeController::class, 'destroy']);
 
         // Restauration (admin, RH)
-        Route::middleware(['role:admin,RH'])->group(function () {
+        Route::middleware(['role:admin,rh'])->group(function () {
             Route::post('/{id}/restore', [CongeController::class, 'restore']);
         });
 
         // Validation (manager, RH, admin)
-        Route::middleware(['role:admin,RH,manager'])->group(function () {
+        Route::middleware(['role:admin,rh ,manager'])->group(function () {
             Route::post('/{id}/valider', [CongeController::class, 'valider']);
         });
 
@@ -127,7 +150,7 @@ Route::prefix('v1/contrats')
     ->middleware(['auth:sanctum'])
     ->group(function () {
         // Corbeille (doit être avant /{id})
-        Route::middleware(['role:admin,RH'])->group(function () {
+        Route::middleware(['role:admin,rh'])->group(function () {
             Route::get('/trashed/list', [ContratController::class, 'trashed']);
         });
 
@@ -137,7 +160,7 @@ Route::prefix('v1/contrats')
         Route::get('/{employeId}/actif', [ContratController::class, 'getContratActif']);
 
         // Routes admin et RH uniquement
-        Route::middleware(['role:admin,RH'])->group(function () {
+        Route::middleware(['role:admin,rh'])->group(function () {
             Route::post('/', [ContratController::class, 'store']);
             Route::put('/{id}', [ContratController::class, 'update']);
             Route::post('/{id}/restore', [ContratController::class, 'restore']);
@@ -146,10 +169,11 @@ Route::prefix('v1/contrats')
             // PDF téléchargement et impression (RH et admin seulement)
             Route::get('/{id}/telecharger', [ContratController::class, 'telecharger']);
             Route::get('/{id}/imprimer', [ContratController::class, 'imprimer']);
+            //  Route::get('/{id}/telecharger', [FichePaieController::class, 'telecharger'])->name('fiches-paie.telecharger');
         });
 
         // Soft delete (admin, RH)
-        Route::middleware(['role:admin,RH'])->group(function () {
+        Route::middleware(['role:admin,rh'])->group(function () {
             Route::delete('/{id}', [ContratController::class, 'destroy']);
         });
     });
@@ -168,8 +192,8 @@ Route::prefix('v1/fiches-paie')
         Route::get('/{id}', [FichePaieController::class, 'show']);
 
         // Routes RH/Admin
-        Route::middleware(['role:admin,RH'])->group(function () {
-            Route::get('/', [FichePaieController::class, 'index']);
+        Route::middleware(['role:admin,rh'])->group(function () {
+           Route::get('/', [FichePaieController::class, 'index']);
             Route::post('/', [FichePaieController::class, 'store']);
             Route::put('/{id}', [FichePaieController::class, 'update']);
             Route::post('/{id}/generer-pdf', [FichePaieController::class, 'genererPDF']);
@@ -218,7 +242,7 @@ Route::prefix('v1/dashboard')
             Route::get('/admin', [DashboardController::class, 'adminDashboard']);
         });
 
-        Route::middleware(['role:RH'])->group(function () {
+        Route::middleware(['role:rh'])->group(function () {
             Route::get('/rh', [DashboardController::class, 'rhDashboard']);
         });
 

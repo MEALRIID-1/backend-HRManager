@@ -77,7 +77,7 @@ class SearchService
         return Conge::query()
             ->where(function ($q) use ($query) {
                 $q->where('type', 'LIKE', "%{$query}%")
-                  ->orWhere('etat', 'LIKE', "%{$query}%")
+                  ->orWhere('statut', 'LIKE', "%{$query}%")
                   ->orWhereHas('employe', function ($sq) use ($query) {
                       $sq->where('nom', 'LIKE', "%{$query}%")
                          ->orWhere('prenom', 'LIKE', "%{$query}%");
@@ -157,8 +157,8 @@ class SearchService
     {
         $query = Contrat::query();
 
-        if (isset($filters['etat'])) {
-            $query->where('etat', $filters['etat']);
+        if (isset($filters['statut'])) {
+            $query->where('statut', $filters['statut']);
         }
 
         if (isset($filters['type'])) {

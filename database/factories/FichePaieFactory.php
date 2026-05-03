@@ -20,19 +20,20 @@ class FichePaieFactory extends Factory
         
         return [
             'user_id' => User::factory(),
-            'periode' => sprintf('%02d/%d', $mois, $annee),
+            'periode' => sprintf('%d-%02d', $annee, $mois),
             'date_emission' => fake()->date(),
             'salaire_brut' => $salaireBrut,
             'salaire_net' => $salaireBrut * 0.75, // estimation
             'heures_travaillees' => fake()->randomFloat(2, 140, 180),
             'heures_supplementaires' => fake()->optional()->randomFloat(2, 0, 20),
+            'absences' => fake()->optional()->randomFloat(2, 0, 5),
             'montant_heures_sup' => fake()->optional()->randomFloat(2, 0, 500),
             'prime_anciennete' => fake()->optional()->randomFloat(2, 0, 200),
             'prime_productivite' => fake()->optional()->randomFloat(2, 0, 300),
             'prime_autres' => fake()->optional()->randomFloat(2, 0, 150),
             'total_cotisations' => $salaireBrut * 0.25, // estimation
             'total_retenues' => $salaireBrut * 0.05, // estimation
-            'statut' => fake()->randomElement(['brouillon', 'validee', 'payee']),
+            'statut' => fake()->randomElement(['brouillon', 'validee', 'payee', 'generee']),
         ];
     }
 

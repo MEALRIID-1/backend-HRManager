@@ -24,7 +24,7 @@ class RapportService
     public function generateCongesReport(array $filters = []): array
     {
         try {
-            $cacheKey = 'rapport_conges_' . md5(json_encode($filters));
+            $cacheKey = 'rapport_v2_conges_' . md5(json_encode($filters));
             
             return Cache::remember($cacheKey, 3600, function () use ($filters) {
                 $query = Conge::with(['employe']);
@@ -50,8 +50,8 @@ class RapportService
                 }
 
                 // Filtre par statut
-                if (isset($filters['etat'])) {
-                    $query->where('etat', $filters['etat']);
+                if (isset($filters['statut'])) {
+                    $query->where('statut', $filters['statut']);
                 }
 
                 $conges = $query->get();
@@ -59,9 +59,9 @@ class RapportService
                 // Statistiques
                 $stats = [
                     'total' => $conges->count(),
-                    'en_attente' => $conges->where('etat', 'en_attente')->count(),
-                    'approuves' => $conges->where('etat', 'approuve')->count(),
-                    'refuses' => $conges->where('etat', 'refuse')->count(),
+                    'en_attente' => $conges->where('statut', 'en_attente')->count(),
+                    'approuves' => $conges->where('statut', 'approuve')->count(),
+                    'refuses' => $conges->where('statut', 'refuse')->count(),
                 ];
 
                 // Répartition par type
@@ -90,7 +90,7 @@ class RapportService
                     'statistiques' => $stats,
                     'par_type' => $parType,
                     'par_departement' => $parDepartement,
-                    'conges' => $conges,
+                    'conges' => $conges->values()->all(),
                     'filtres_appliques' => $filters,
                 ];
             });
@@ -109,7 +109,7 @@ class RapportService
     public function generateEmployesReport(array $filters = []): array
     {
         try {
-            $cacheKey = 'rapport_employes_' . md5(json_encode($filters));
+            $cacheKey = 'rapport_v2_employes_' . md5(json_encode($filters));
             
             return Cache::remember($cacheKey, 3600, function () use ($filters) {
                 $query = User::query();
@@ -168,7 +168,7 @@ class RapportService
                         'contrats_crees_mois' => $contratsMois,
                     ],
                     'par_departement' => $parDepartement,
-                    'employes' => $employes,
+                    'employes' => $employes->values()->all(),
                     'filtres_appliques' => $filters,
                 ];
             });
@@ -187,7 +187,7 @@ class RapportService
     public function generateActivityReport(array $filters = []): array
     {
         try {
-            $cacheKey = 'rapport_activite_' . md5(json_encode($filters));
+            $cacheKey = 'rapport_v2_activite_' . md5(json_encode($filters));
             
             return Cache::remember($cacheKey, 3600, function () use ($filters) {
                 $query = ActivityLog::with(['user']);
@@ -245,7 +245,7 @@ class RapportService
                     'par_entite' => $parEntite,
                     'par_action' => $parAction,
                     'par_utilisateur' => $parUtilisateur,
-                    'activites' => $activites,
+                    'activites' => $activites->values()->all(),
                     'filtres_appliques' => $filters,
                 ];
             });

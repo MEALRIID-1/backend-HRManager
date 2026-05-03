@@ -32,7 +32,7 @@
             @endif
             <tr>
                 <th>Salaire de base</th>
-                <td><strong>{{ number_format($contrat->salaire_base, 2, ',', ' ') }} €</strong></td>
+                <td><strong>{{ number_format($contrat->salaire_base, 2, ',', ' ') }} XAF</strong></td>
             </tr>
             @if($contrat->poste)
             <tr>

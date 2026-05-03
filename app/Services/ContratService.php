@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Models\ActivityLog;
 use App\Models\Contrat;
 use App\Models\Notification;
 use App\Models\User;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Contracts\Pagination\CursorPaginator;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -18,66 +16,71 @@ use Illuminate\Validation\ValidationException;
 
 class ContratService
 {
-    private FileUploadService $fileUploadService;
-    private PDFGeneratorService $pdfGeneratorService;
-
     public function __construct(
-        FileUploadService $fileUploadService,
-        PDFGeneratorService $pdfGeneratorService
-    ) {
-        $this->fileUploadService = $fileUploadService;
-        $this->pdfGeneratorService = $pdfGeneratorService;
-    }
+        private readonly FileUploadService $fileUploadService,
+        private readonly PDFGeneratorService $pdfGeneratorService,
+        private readonly ActivityLogService $activityLogService,
+    ) {}
 
-    /**
-     * Créer un contrat avec validation métier (un seul contrat actif par employé).
-     *
-     * @param array<string, mixed> $data
-     * @throws \Exception
-     */
     public function create(array $data): Contrat
     {
         try {
             return DB::transaction(function () use ($data) {
-                // Vérifier si l'employé a déjà un contrat actif
-                $contratActif = $this->verifierContratActif($data['employe_id']);
-                if ($contratActif && (!isset($data['forcer']) || !$data['forcer'])) {
+                $userId = $data['user_id'] ?? $data['employe_id'] ?? null;
+                
+                if (!$userId) {
                     throw ValidationException::withMessages([
-                        'employe_id' => ['Cet employé a déjà un contrat actif. Veuillez le clôturer avant d\'en créer un nouveau.'],
+                        'user_id' => ['L\'identifiant de l\'employé est requis.'],
                     ]);
                 }
 
-                // Si on force, on termine l'ancien contrat
+                $contratActif = $this->verifierContratActif($userId);
+                if ($contratActif && (!isset($data['forcer']) || !$data['forcer'])) {
+                    throw ValidationException::withMessages([
+                        'user_id' => ['Cet employé a déjà un contrat actif.'],
+                    ]);
+                }
+
                 if ($contratActif && isset($data['forcer']) && $data['forcer']) {
-                    $contratActif->update(['etat' => 'termine', 'date_fin' => now()]);
+                    $contratActif->update(['statut' => 'termine', 'date_fin' => now()]);
                 }
 
                 $contrat = Contrat::create([
-                    'user_id' => $data['employe_id'],
-                    'type' => $data['type'],
-                    'date_debut' => $data['date_debut'],
-                    'date_fin' => $data['date_fin'] ?? null,
-                    'etat' => $data['etat'] ?? 'actif',
-                    'salaire_base' => $data['salaire_base'],
+                    'user_id'      => $userId,
+                    'type'         => $data['type'],
+                    'date_debut'   => $data['date_debut'],
+                    'date_fin'     => $data['date_fin'] ?? null,
+                    'statut'       => $data['statut'] ?? 'actif',
+                    'salaire_brut' => $data['salaire_brut'] ?? $data['salaire_base'] ?? null,
+                    'poste'        => $data['poste'] ?? null,
+                    'departement'  => $data['departement'] ?? null,
                 ]);
 
-                // Logger l'activité
-                ActivityLog::create([
-                    'user_id' => auth()->id(),
-                    'action' => 'create',
-                    'entity_name' => 'contrat',
-                    'new_value' => json_encode($contrat->toArray()),
-                    'timestamp' => now(),
-                    'ip_address' => request()->ip(),
-                ]);
+                $employe = User::find($userId);
+                
+                // Récupérer l'utilisateur connecté qui fait l'action
+                $connectedUserId = auth()->id();
+                $connectedUser = auth()->user();
 
-                // Notifier l'employé
+                // ✅ CORRECTION : Appel avec les bons paramètres selon la signature de log()
+                $this->activityLogService->log(
+                    'create',                                                    // action
+                    'contrats',                                                  // module
+                    "Création du contrat {$data['type']} pour {$employe?->prenom} {$employe?->nom}", // description
+                    $contrat->id,                                                // referenceId
+                    'Contrat',                                                   // referenceType
+                    $connectedUserId,                                            // userId (utilisateur connecté)
+                    $connectedUser?->name ?? $connectedUser?->email ?? null,    // userName
+                    request()->ip(),                                             // ipAddress
+                    request()->userAgent()                                       // userAgent
+                );
+
                 Notification::create([
-                    'user_id' => $data['employe_id'],
-                    'type' => 'nouveau_contrat',
+                    'user_id' => $userId,
+                    'type'    => 'nouveau_contrat',
+                    'titre'   => 'Nouveau contrat',
                     'message' => "Un nouveau contrat de type {$data['type']} a été créé pour vous.",
-                    'statut' => 'non_lue',
-                    'date_envoi' => now(),
+                    'lu'      => false,
                 ]);
 
                 return $contrat;
@@ -85,85 +88,86 @@ class ContratService
         } catch (ValidationException $e) {
             throw $e;
         } catch (\Exception $e) {
-            Log::error('Erreur lors de la création du contrat: ' . $e->getMessage());
+            Log::error('Erreur création contrat: ' . $e->getMessage(), ['data' => $data]);
             throw $e;
         }
     }
 
-    /**
-     * Modifier un contrat avec logs.
-     *
-     * @param array<string, mixed> $data
-     * @throws \Exception
-     */
     public function update(Contrat $contrat, array $data): Contrat
     {
         try {
             return DB::transaction(function () use ($contrat, $data) {
-                $oldValues = $contrat->toArray();
+                $oldValues = [
+                    'type' => $contrat->type, 
+                    'date_debut' => $contrat->date_debut, 
+                    'date_fin' => $contrat->date_fin, 
+                    'salaire_brut' => $contrat->salaire_brut
+                ];
 
                 $contrat->update([
-                    'type' => $data['type'] ?? $contrat->type,
-                    'date_debut' => $data['date_debut'] ?? $contrat->date_debut,
-                    'date_fin' => $data['date_fin'] ?? $contrat->date_fin,
-                    'etat' => $data['etat'] ?? $contrat->etat,
-                    'salaire_base' => $data['salaire_base'] ?? $contrat->salaire_base,
+                    'type'         => $data['type'] ?? $contrat->type,
+                    'date_debut'   => $data['date_debut'] ?? $contrat->date_debut,
+                    'date_fin'     => $data['date_fin'] ?? $contrat->date_fin,
+                    'statut'       => $data['statut'] ?? $contrat->statut,
+                    'salaire_brut' => $data['salaire_brut'] ?? $data['salaire_base'] ?? $contrat->salaire_brut,
+                    'poste'        => $data['poste'] ?? $contrat->poste,
+                    'departement'  => $data['departement'] ?? $contrat->departement,
                 ]);
 
-                // Logger l'activité
-                ActivityLog::create([
-                    'user_id' => auth()->id(),
-                    'action' => 'update',
-                    'entity_name' => 'contrat',
-                    'old_value' => json_encode($oldValues),
-                    'new_value' => json_encode($contrat->toArray()),
-                    'timestamp' => now(),
-                    'ip_address' => request()->ip(),
-                ]);
+                // Récupérer l'utilisateur connecté
+                $connectedUserId = auth()->id();
+                $connectedUser = auth()->user();
+
+                $this->activityLogService->log(
+                    'update',
+                    'contrats',
+                    "Modification du contrat #{$contrat->id}",
+                    $contrat->id,
+                    'Contrat',
+                    $connectedUserId,
+                    $connectedUser?->name ?? $connectedUser?->email ?? null,
+                    request()->ip(),
+                    request()->userAgent()
+                );
 
                 return $contrat;
             });
         } catch (\Exception $e) {
-            Log::error('Erreur lors de la mise à jour du contrat: ' . $e->getMessage());
+            Log::error('Erreur mise à jour contrat: ' . $e->getMessage());
             throw $e;
         }
     }
 
-    /**
-     * Soft delete d'un contrat.
-     *
-     * @throws \Exception
-     */
     public function destroy(Contrat $contrat): bool
     {
         try {
             return DB::transaction(function () use ($contrat) {
-                $oldValues = $contrat->toArray();
                 $result = $contrat->delete();
 
-                // Logger l'activité
-                ActivityLog::create([
-                    'user_id' => auth()->id(),
-                    'action' => 'delete',
-                    'entity_name' => 'contrat',
-                    'old_value' => json_encode($oldValues),
-                    'timestamp' => now(),
-                    'ip_address' => request()->ip(),
-                ]);
+                // Récupérer l'utilisateur connecté
+                $connectedUserId = auth()->id();
+                $connectedUser = auth()->user();
+
+                $this->activityLogService->log(
+                    'delete',
+                    'contrats',
+                    "Suppression du contrat #{$contrat->id}",
+                    $contrat->id,
+                    'Contrat',
+                    $connectedUserId,
+                    $connectedUser?->name ?? $connectedUser?->email ?? null,
+                    request()->ip(),
+                    request()->userAgent()
+                );
 
                 return $result;
             });
         } catch (\Exception $e) {
-            Log::error('Erreur lors de la suppression du contrat: ' . $e->getMessage());
+            Log::error('Erreur suppression contrat: ' . $e->getMessage());
             throw $e;
         }
     }
 
-    /**
-     * Restaurer un contrat supprimé.
-     *
-     * @throws \Exception
-     */
     public function restore(int $id): Contrat
     {
         try {
@@ -171,147 +175,99 @@ class ContratService
                 $contrat = Contrat::withTrashed()->findOrFail($id);
                 $contrat->restore();
 
-                // Logger l'activité
-                ActivityLog::create([
-                    'user_id' => auth()->id(),
-                    'action' => 'restore',
-                    'entity_name' => 'contrat',
-                    'new_value' => json_encode($contrat->toArray()),
-                    'timestamp' => now(),
-                    'ip_address' => request()->ip(),
-                ]);
+                // Récupérer l'utilisateur connecté
+                $connectedUserId = auth()->id();
+                $connectedUser = auth()->user();
+
+                $this->activityLogService->log(
+                    'restore',
+                    'contrats',
+                    "Restauration du contrat #{$contrat->id}",
+                    $contrat->id,
+                    'Contrat',
+                    $connectedUserId,
+                    $connectedUser?->name ?? $connectedUser?->email ?? null,
+                    request()->ip(),
+                    request()->userAgent()
+                );
 
                 return $contrat;
             });
         } catch (\Exception $e) {
-            Log::error('Erreur lors de la restauration du contrat: ' . $e->getMessage());
+            Log::error('Erreur restauration contrat: ' . $e->getMessage());
             throw $e;
         }
     }
 
-    /**
-     * Liste paginée avec filtres.
-     *
-     * @param array<string, mixed> $filters
-     */
-    public function list(array $filters = [], int $perPage = 15): CursorPaginator
+    public function list(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
         $query = Contrat::with(['employe']);
 
-        if (isset($filters['type'])) {
+        if (isset($filters['type']) && $filters['type']) {
             $query->where('type', $filters['type']);
         }
-
-        if (isset($filters['etat'])) {
-            $query->where('etat', $filters['etat']);
+        if (isset($filters['statut']) && $filters['statut']) {
+            $query->where('statut', $filters['statut']);
         }
-
-        if (isset($filters['employe_id'])) {
+        if (isset($filters['user_id']) && $filters['user_id']) {
+            $query->where('user_id', $filters['user_id']);
+        } elseif (isset($filters['employe_id']) && $filters['employe_id']) {
             $query->where('user_id', $filters['employe_id']);
         }
-
-        if (isset($filters['date_debut'])) {
-            $query->where('date_debut', '>=', $filters['date_debut']);
-        }
-
-        if (isset($filters['date_fin'])) {
-            $query->where('date_fin', '<=', $filters['date_fin']);
-        }
-
         if (isset($filters['expirant_bientot']) && $filters['expirant_bientot']) {
-            $jours = $filters['jours'] ?? 30;
-            $query->expirantBientot($jours);
+            $query->expirantBientot($filters['jours'] ?? 30);
         }
 
-        return $query->orderBy('created_at', 'desc')->cursorPaginate($perPage);
+        return $query->orderBy('created_at', 'desc')->paginate($perPage);
     }
 
-    /**
-     * Liste des contrats en corbeille.
-     */
-    public function trashed(int $perPage = 15): CursorPaginator
+    public function trashed(int $perPage = 15): LengthAwarePaginator
     {
-        return Contrat::onlyTrashed()->with(['employe'])->cursorPaginate($perPage);
+        return Contrat::onlyTrashed()->with(['employe'])->paginate($perPage);
     }
 
-    /**
-     * Vérifier si un employé a déjà un contrat actif.
-     */
-    public function verifierContratActif(int $employeId): ?Contrat
+    public function verifierContratActif(int $userId): ?Contrat
     {
-        return Contrat::where('user_id', $employeId)
-            ->where('etat', 'actif')
-            ->where(function ($query) {
-                $query->whereNull('date_fin')
-                    ->orWhere('date_fin', '>=', now());
-            })
+        return Contrat::where('user_id', $userId)
+            ->where('statut', 'actif')
+            ->where(fn($q) => $q->whereNull('date_fin')->orWhere('date_fin', '>=', now()))
             ->first();
     }
 
-    /**
-     * Retourner le contrat actif d'un employé.
-     */
-    public function getContratActif(int $employeId): ?Contrat
+    public function getContratActif(int $userId): ?Contrat
     {
         return Contrat::with('employe')
-            ->where('user_id', $employeId)
-            ->where('etat', 'actif')
-            ->where(function ($query) {
-                $query->whereNull('date_fin')
-                    ->orWhere('date_fin', '>=', now());
-            })
+            ->where('user_id', $userId)
+            ->where('statut', 'actif')
+            ->where(fn($q) => $q->whereNull('date_fin')->orWhere('date_fin', '>=', now()))
             ->first();
     }
 
-    /**
-     * Historique des contrats d'un employé.
-     *
-     * @return Collection<int, Contrat>
-     */
-    public function getHistoriqueContrats(int $employeId): Collection
+    public function getHistoriqueContrats(int $userId): Collection
     {
         return Contrat::with(['employe'])
-            ->where('user_id', $employeId)
+            ->where('user_id', $userId)
             ->orderBy('date_debut', 'desc')
             ->get();
     }
 
-    /**
-     * Générer un PDF du contrat sous forme de lettre officielle.
-     *
-     * @throws \Exception
-     */
     public function genererPDFContrat(Contrat $contrat): string
     {
         try {
-            // Utiliser le PDFGeneratorService pour générer le PDF
             $pdfUrl = $this->pdfGeneratorService->genererContrat($contrat);
-            
-            // Extraire le chemin relatif de l'URL
-            $path = str_replace(Storage::disk('public')->url(''), '', $pdfUrl);
-            
-            return $path;
+            return str_replace(Storage::disk('public')->url(''), '', $pdfUrl);
         } catch (\Exception $e) {
-            Log::error('Erreur lors de la génération du PDF: ' . $e->getMessage());
+            Log::error('Erreur génération PDF: ' . $e->getMessage());
             throw $e;
         }
     }
 
-    /**
-     * Télécharger un PDF existant.
-     */
     public function telechargerPDF(string $path): ?string
     {
-        if (!Storage::disk('public')->exists($path)) {
-            return null;
-        }
-
+        if (!Storage::disk('public')->exists($path)) return null;
         return storage_path('app/public/' . $path);
     }
 
-    /**
-     * Récupérer un contrat avec toutes ses relations.
-     */
     public function getContratWithDetails(int $id): ?Contrat
     {
         return Contrat::with(['employe'])->find($id);

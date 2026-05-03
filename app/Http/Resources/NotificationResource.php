@@ -20,7 +20,7 @@ class NotificationResource extends JsonResource
         return [
             'id' => $this->id,
             'type' => $this->type,
-            'type_label' => $this->getTypes()[$this->type] ?? $this->type,
+            'type_label' => $this->getTypeLabel(), // ✅ Utilise une méthode d'instance
             'titre' => $this->titre,
             'message' => $this->message,
             'action_url' => $this->action_url,
@@ -33,5 +33,26 @@ class NotificationResource extends JsonResource
             'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
             'created_at_human' => $this->created_at?->diffForHumans(),
         ];
+    }
+
+    // ✅ Ajoute cette méthode dans le Resource
+    protected function getTypeLabel(): string
+    {
+        $types = [
+            'info' => 'Information',
+            'success' => 'Succès',
+            'warning' => 'Alerte',
+            'error' => 'Erreur',
+            'danger' => 'Danger',
+            'absence' => 'Absence',
+            'conge' => 'Congé',
+            'paie' => 'Fiche de paie',
+            'contrat' => 'Contrat',
+            'entretien' => 'Entretien',
+            'formation' => 'Formation',
+            'document' => 'Document',
+        ];
+
+        return $types[$this->type] ?? $this->type;
     }
 }

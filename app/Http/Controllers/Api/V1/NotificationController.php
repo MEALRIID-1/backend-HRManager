@@ -24,7 +24,7 @@ class NotificationController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        try {
+        // try {
             $perPage = $request->integer('per_page', 15);
 
             $notifications = $this->notificationService->getNotifications($request->user()->id, $perPage);
@@ -40,13 +40,13 @@ class NotificationController extends Controller
                     'non_lues' => $this->notificationService->getUnreadCount($request->user()->id),
                 ],
             ], 200);
-        } catch (\Exception $e) {
-            Log::error('Erreur liste notifications: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Une erreur est survenue',
-            ], 500);
-        }
+        // } catch (\Exception $e) {
+        //     Log::error('Erreur liste notifications: ' . $e->getMessage());
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => 'Une erreur est survenue',
+        //     ], 500);
+        // }
     }
 
     /**

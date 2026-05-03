@@ -31,7 +31,9 @@ class CongeResource extends JsonResource
             'commentaire' => $this->commentaire,
             'employe' => $this->whenLoaded('employe', fn () => [
                 'id' => $this->employe->id,
-                'name' => $this->employe->name,
+                'nom' => $this->employe->nom,
+                'prenom' => $this->employe->prenom,
+                'departement' => $this->employe->departement,
             ]),
             'remplacant' => $this->whenLoaded('remplacant', fn () => [
                 'id' => $this->remplacant->id,
@@ -40,6 +42,28 @@ class CongeResource extends JsonResource
             'validations' => ValidationResource::collection($this->whenLoaded('validations')),
             'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
             'updated_at' => $this->updated_at?->format('Y-m-d H:i:s'),
+        ];
+    }
+    
+    // ✅ Ajouter ces méthodes si elles n'existent pas dans le modèle
+    protected function getTypes(): array
+    {
+        return [
+            'conge_paye' => 'Congé payé',
+            'rtt' => 'RTT',
+            'conge_sans_solde' => 'Congé sans solde',
+            'maladie' => 'Maladie',
+            'formation' => 'Formation',
+        ];
+    }
+    
+    protected function getStatuts(): array
+    {
+        return [
+            'en_attente' => 'En attente',
+            'approuve' => 'Approuvé',
+            'partiellement_valide' => 'Partiellement validé',
+            'refuse' => 'Refusé',
         ];
     }
 }

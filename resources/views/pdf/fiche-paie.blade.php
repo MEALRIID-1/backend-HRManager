@@ -4,27 +4,35 @@
     <meta charset="UTF-8">
     <title>Bulletin de Paie - {{ $fiche->mois }} {{ $fiche->annee }}</title>
     <style>
+        /* Force A4 and uniform 20mm margins on all sides to prevent cut-offs */
+        @page {
+            size: A4;
+            margin: 20mm;
+        }
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        body {
+        html, body {
+            width: 210mm;
+            height: 297mm;
             font-family: Arial, sans-serif;
             font-size: 12px;
             line-height: 1.4;
             color: #333;
         }
+        /* Container sized to A4 minus margins */
         .container {
-            width: 100%;
-            max-width: 800px;
+            width: calc(210mm - 40mm);
+            max-width: calc(210mm - 40mm);
             margin: 0 auto;
-            padding: 20px;
+            padding: 0;
         }
         .header {
             border: 2px solid #333;
-            padding: 15px;
-            margin-bottom: 20px;
+            padding: 12px;
+            margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
         }
@@ -55,16 +63,17 @@
         }
         .employee-section {
             border: 1px solid #333;
-            padding: 15px;
-            margin-bottom: 20px;
+            padding: 12px;
+            margin-bottom: 12px;
         }
         .section-title {
             font-size: 14px;
             font-weight: bold;
             background-color: #e8f4fc;
             padding: 8px;
-            margin: -15px -15px 15px -15px;
+            margin: -12px -12px 12px -12px;
             border-bottom: 1px solid #333;
+            page-break-inside: avoid;
         }
         .employee-grid {
             display: flex;
@@ -75,7 +84,7 @@
         }
         .info-row {
             display: flex;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
         .info-label {
             font-weight: bold;
@@ -88,18 +97,21 @@
         .salary-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
+            margin-bottom: 12px;
+            page-break-inside: auto;
         }
         .salary-table th {
             background-color: #1a5490;
             color: white;
-            padding: 10px;
+            padding: 8px;
             text-align: left;
             font-size: 11px;
         }
         .salary-table td {
-            padding: 8px 10px;
+            padding: 6px 8px;
             border-bottom: 1px solid #ddd;
+            word-wrap: break-word;
+            page-break-inside: avoid;
         }
         .salary-table .amount {
             text-align: right;
@@ -116,8 +128,8 @@
         }
         .summary-section {
             border: 1px solid #333;
-            padding: 15px;
-            margin-bottom: 20px;
+            padding: 12px;
+            margin-bottom: 12px;
         }
         .summary-grid {
             display: flex;
@@ -126,8 +138,9 @@
         .summary-box {
             width: 30%;
             text-align: center;
-            padding: 10px;
+            padding: 8px;
             border: 1px solid #ddd;
+            page-break-inside: avoid;
         }
         .summary-label {
             font-size: 10px;
@@ -140,14 +153,15 @@
             color: #1a5490;
         }
         .footer {
-            margin-top: 30px;
-            padding-top: 20px;
+            margin-top: 20px;
+            padding-top: 12px;
             border-top: 2px solid #333;
+            page-break-inside: avoid;
         }
         .signatures {
             display: flex;
             justify-content: space-between;
-            margin-top: 40px;
+            margin-top: 20px;
         }
         .signature-box {
             width: 45%;
@@ -155,7 +169,7 @@
         }
         .signature-line {
             border-top: 1px solid #333;
-            margin-top: 60px;
+            margin-top: 40px;
             padding-top: 10px;
             font-size: 10px;
         }
@@ -163,9 +177,10 @@
             font-size: 9px;
             color: #666;
             text-align: center;
-            margin-top: 20px;
-            padding: 10px;
+            margin-top: 12px;
+            padding: 8px;
             border: 1px solid #ddd;
+            page-break-inside: avoid;
         }
         .calculation-detail {
             font-size: 9px;
@@ -182,7 +197,7 @@
                 <div class="company-name">HRManager SAS</div>
                 <div class="company-details">
                     123 Avenue des Entreprises<br>
-                    75000 Paris, France<br>
+                    75000 Douala, cameroun<br>
                     SIRET: 123 456 789 00012<br>
                     Code NAF: 6201Z
                 </div>
@@ -251,19 +266,19 @@
                 <tr>
                     <td>Salaire de base</td>
                     <td>151.67 h</td>
-                    <td>{{ number_format($calculs['salaire_base'] / 151.67, 2, ',', ' ') }} €/h</td>
-                    <td class="amount">{{ number_format($calculs['salaire_base'], 2, ',', ' ') }} €</td>
+                    <td>{{ number_format($calculs['salaire_base'] / 151.67, 2, ',', ' ') }} XAF/h</td>
+                    <td class="amount">{{ number_format($calculs['salaire_base'], 2, ',', ' ') }} XAF</td>
                 </tr>
 
                 {{-- Heures supplémentaires --}}
-                @if($fiche->heures_sup > 0)
+                @if($fiche->heures_supplementaires > 0)
                 <tr>
                     <td>Heures supplémentaires (majorées 25%)<br>
-                        <span class="calculation-detail">{{ $fiche->heures_sup }} h × {{ number_format($calculs['salaire_base'] / 151.67 * 1.25, 2, ',', ' ') }} €/h</span>
+                        <span class="calculation-detail">{{ $fiche->heures_supplementaires }} h × {{ number_format($calculs['salaire_base'] / 151.67 * 1.25, 2, ',', ' ') }} XAF/h</span>
                     </td>
-                    <td>{{ $fiche->heures_sup }} h</td>
-                    <td>{{ number_format($calculs['salaire_base'] / 151.67 * 1.25, 2, ',', ' ') }} €/h</td>
-                    <td class="amount">{{ number_format($calculs['montant_heures_sup'], 2, ',', ' ') }} €</td>
+                    <td>{{ $fiche->heures_supplementaires }} h</td>
+                    <td>{{ number_format($calculs['salaire_base'] / 151.67 * 1.25, 2, ',', ' ') }} XAF/h</td>
+                    <td class="amount">{{ number_format($calculs['montant_heures_sup'], 2, ',', ' ') }} XAF</td>
                 </tr>
                 @endif
 
@@ -271,18 +286,18 @@
                 @if($fiche->absences > 0)
                 <tr>
                     <td>Absences déduites<br>
-                        <span class="calculation-detail">{{ $fiche->absences }} j × {{ number_format($calculs['deduction_absences'] / $fiche->absences, 2, ',', ' ') }} €/j</span>
+                        <span class="calculation-detail">{{ $fiche->absences }} j × {{ number_format($calculs['deduction_absences'] / $fiche->absences, 2, ',', ' ') }} XAF/j</span>
                     </td>
                     <td>{{ $fiche->absences }} j</td>
-                    <td>-{{ number_format($calculs['deduction_absences'] / $fiche->absences, 2, ',', ' ') }} €/j</td>
-                    <td class="amount" style="color: red;">-{{ number_format($calculs['deduction_absences'], 2, ',', ' ') }} €</td>
+                    <td>-{{ number_format($calculs['deduction_absences'] / $fiche->absences, 2, ',', ' ') }} XAF/j</td>
+                    <td class="amount" style="color: red;">-{{ number_format($calculs['deduction_absences'], 2, ',', ' ') }} XAF</td>
                 </tr>
                 @endif
 
                 {{-- Total brut --}}
                 <tr class="total-row">
                     <td colspan="3"><strong>SALAIRE BRUT</strong></td>
-                    <td class="amount"><strong>{{ number_format($calculs['salaire_brut'], 2, ',', ' ') }} €</strong></td>
+                    <td class="amount"><strong>{{ number_format($calculs['salaire_brut'], 2, ',', ' ') }} XAF</strong></td>
                 </tr>
 
                 {{-- Cotisations salariales --}}
@@ -291,39 +306,39 @@
                 </tr>
                 <tr>
                     <td>URSSAF Maladie, Maternité, Invalidité, Décès</td>
-                    <td>{{ number_format($calculs['salaire_brut'], 2, ',', ' ') }} €</td>
+                    <td>{{ number_format($calculs['salaire_brut'], 2, ',', ' ') }} XAF</td>
                     <td>0,75%</td>
-                    <td class="amount" style="color: red;">-{{ number_format($calculs['salaire_brut'] * 0.0075, 2, ',', ' ') }} €</td>
+                    <td class="amount" style="color: red;">-{{ number_format($calculs['salaire_brut'] * 0.0075, 2, ',', ' ') }} XAF</td>
                 </tr>
                 <tr>
                     <td>URSSAF Assurance Vieillesse (plafonnée)</td>
-                    <td>{{ number_format(min($calculs['salaire_brut'], 3377), 2, ',', ' ') }} €</td>
+                    <td>{{ number_format(min($calculs['salaire_brut'], 3377), 2, ',', ' ') }} XAF</td>
                     <td>6,90%</td>
-                    <td class="amount" style="color: red;">-{{ number_format(min($calculs['salaire_brut'], 3377) * 0.069, 2, ',', ' ') }} €</td>
+                    <td class="amount" style="color: red;">-{{ number_format(min($calculs['salaire_brut'], 3377) * 0.069, 2, ',', ' ') }} XAF</td>
                 </tr>
                 <tr>
                     <td>URSSAF Assurance Vieillesse (déplafonnée)</td>
-                    <td>{{ number_format($calculs['salaire_brut'], 2, ',', ' ') }} €</td>
+                    <td>{{ number_format($calculs['salaire_brut'], 2, ',', ' ') }} XAF</td>
                     <td>0,40%</td>
-                    <td class="amount" style="color: red;">-{{ number_format($calculs['salaire_brut'] * 0.004, 2, ',', ' ') }} €</td>
+                    <td class="amount" style="color: red;">-{{ number_format($calculs['salaire_brut'] * 0.004, 2, ',', ' ') }} XAF</td>
                 </tr>
                 <tr>
                     <td>Contribution au FNAL</td>
-                    <td>{{ number_format($calculs['salaire_brut'], 2, ',', ' ') }} €</td>
+                    <td>{{ number_format($calculs['salaire_brut'], 2, ',', ' ') }} XAF</td>
                     <td>0,50%</td>
-                    <td class="amount" style="color: red;">-{{ number_format($calculs['salaire_brut'] * 0.005, 2, ',', ' ') }} €</td>
+                    <td class="amount" style="color: red;">-{{ number_format($calculs['salaire_brut'] * 0.005, 2, ',', ' ') }} XAF</td>
                 </tr>
 
                 {{-- Total cotisations --}}
                 <tr class="total-row">
                     <td colspan="3"><strong>TOTAL COTISATIONS SALARIALES</strong></td>
-                    <td class="amount" style="color: red;"><strong>-{{ number_format($calculs['cotisations_salariales'], 2, ',', ' ') }} €</strong></td>
+                    <td class="amount" style="color: red;"><strong>-{{ number_format($calculs['cotisations_salariales'], 2, ',', ' ') }} XAF</strong></td>
                 </tr>
 
                 {{-- Net à payer --}}
                 <tr class="net-row">
                     <td colspan="3"><strong>NET À PAYER</strong></td>
-                    <td class="amount"><strong>{{ number_format($calculs['net_a_payer'], 2, ',', ' ') }} €</strong></td>
+                    <td class="amount"><strong>{{ number_format($calculs['net_a_payer'], 2, ',', ' ') }} XAF</strong></td>
                 </tr>
             </tbody>
         </table>
@@ -334,15 +349,15 @@
             <div class="summary-grid">
                 <div class="summary-box">
                     <div class="summary-label">Salaire brut</div>
-                    <div class="summary-value">{{ number_format($calculs['salaire_brut'], 2, ',', ' ') }} €</div>
+                    <div class="summary-value">{{ number_format($calculs['salaire_brut'], 2, ',', ' ') }} XAF</div>
                 </div>
                 <div class="summary-box">
                     <div class="summary-label">Cotisations</div>
-                    <div class="summary-value" style="color: red;">-{{ number_format($calculs['cotisations_salariales'], 2, ',', ' ') }} €</div>
+                    <div class="summary-value" style="color: red;">-{{ number_format($calculs['cotisations_salariales'], 2, ',', ' ') }} XAF</div>
                 </div>
                 <div class="summary-box">
                     <div class="summary-label">Net à payer</div>
-                    <div class="summary-value" style="color: #1a5490;">{{ number_format($calculs['net_a_payer'], 2, ',', ' ') }} €</div>
+                    <div class="summary-value" style="color: #1a5490;">{{ number_format($calculs['net_a_payer'], 2, ',', ' ') }} XAF</div>
                 </div>
             </div>
         </div>

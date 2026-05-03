@@ -19,18 +19,17 @@ class ValidationResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'type' => $this->type,
-            'type_label' => $this->getTypes()[$this->type] ?? $this->type,
-            'statut' => $this->statut,
-            'statut_label' => $this->getStatuts()[$this->statut] ?? $this->statut,
+            'niveau' => $this->niveau,
+            'decision' => $this->decision,
             'commentaire' => $this->commentaire,
             'date_validation' => $this->date_validation?->format('Y-m-d H:i:s'),
-            'niveau' => $this->niveau,
             'validateur' => $this->whenLoaded('validateur', fn () => [
                 'id' => $this->validateur->id,
-                'name' => $this->validateur->name,
+                'nom' => $this->validateur->nom,
+                'prenom' => $this->validateur->prenom,
             ]),
             'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
+            'updated_at' => $this->updated_at?->format('Y-m-d H:i:s'),
         ];
     }
 }

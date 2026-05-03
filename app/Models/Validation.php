@@ -20,6 +20,7 @@ class Validation extends Model
         'validateur_id',
         'niveau',
         'decision',
+        'statut', 
         'commentaire',
         'date_validation',
     ];

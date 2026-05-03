@@ -11,6 +11,7 @@ use App\Http\Resources\ContratResource;
 use App\Models\Contrat;
 use App\Services\ContratService;
 use App\Services\ParametreService;
+use App\Services\PDFGeneratorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -23,6 +24,7 @@ class ContratController extends Controller
     public function __construct(
         private readonly ContratService $contratService,
         private readonly ParametreService $parametreService,
+        private readonly PDFGeneratorService $pdfGeneratorService,
     ) {
     }
 
@@ -31,32 +33,23 @@ class ContratController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        try {
-            // Filtres supportés: ?type=, ?etat=, ?employe_id=, ?expirant_bientot=1, ?jours=30, ?per_page=15
-            $filters = $request->only(['type', 'etat', 'employe_id', 'expirant_bientot', 'jours']);
-            $perPage = $request->integer('per_page', 15);
+        $filters = $request->only(['type', 'etat', 'employe_id', 'expirant_bientot', 'jours']);
+        $perPage = $request->integer('per_page', 15);
 
-            $contrats = $this->contratService->list($filters, $perPage);
+        $contrats = $this->contratService->list($filters, $perPage);
 
-            return response()->json([
-                'success' => true,
-                'data' => ContratResource::collection($contrats),
-                'meta' => [
-                    'current_page' => $contrats->currentPage(),
-                    'last_page' => $contrats->lastPage(),
-                    'per_page' => $contrats->perPage(),
-                    'total' => $contrats->total(),
-                    'from' => $contrats->firstItem(),
-                    'to' => $contrats->lastItem(),
-                ],
-            ], 200);
-        } catch (\Exception $e) {
-            Log::error('Erreur liste contrats: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Une erreur est survenue',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'data' => ContratResource::collection($contrats),
+            'meta' => [
+                'current_page' => $contrats->currentPage(),
+                'last_page' => $contrats->lastPage(),
+                'per_page' => $contrats->perPage(),
+                'total' => $contrats->total(),
+                'from' => $contrats->firstItem(),
+                'to' => $contrats->lastItem(),
+            ],
+        ], 200);
     }
 
     /**
@@ -236,7 +229,7 @@ class ContratController extends Controller
     public function genererPDF(int $id): JsonResponse
     {
         try {
-            $contrat = Contrat::find($id);
+            $contrat = Contrat::with('employe')->find($id);
 
             if (!$contrat) {
                 return response()->json([
@@ -259,72 +252,35 @@ class ContratController extends Controller
             Log::error('Erreur génération PDF: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Une erreur est survenue lors de la génération du PDF',
+                'message' => 'Une erreur est survenue lors de la génération du PDF: ' . $e->getMessage(),
             ], 500);
         }
     }
 
-    /**
-     * Télécharger le PDF du contrat (admin et RH seulement).
-     */
-    public function telecharger(int $id, Request $request): BinaryFileResponse|JsonResponse
-    {
-        try {
-            // Vérifier la permission contrats.download
-            if (!$this->parametreService->canAccess($request->user(), 'contrats.download')) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Vous n\'avez pas la permission de télécharger les contrats',
-                ], 403);
-            }
-
-            $contrat = Contrat::find($id);
-
-            if (!$contrat) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Contrat non trouvé',
-                ], 404);
-            }
-
-            // Vérifier si un PDF existe déjà
-            $pdfPath = 'contrats/contrat_' . $contrat->id . '_' . $contrat->employe->nom . '.pdf';
-
-            if (!Storage::disk('public')->exists($pdfPath)) {
-                // Générer le PDF s'il n'existe pas
-                $pdfPath = $this->contratService->genererPDFContrat($contrat);
-            }
-
-            $fullPath = $this->contratService->telechargerPDF($pdfPath);
-
-            if (!$fullPath) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'PDF non trouvé',
-                ], 404);
-            }
-
-            return response()->file($fullPath, [
-                'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'attachment; filename="contrat_' . $contrat->id . '.pdf"',
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Erreur téléchargement PDF: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Une erreur est survenue',
-            ], 500);
-        }
+  /**
+ * Télécharger le PDF du contrat (admin et RH seulement).
+ */
+public function telecharger(int $id, Request $request)
+{
+    if (!$this->parametreService->canAccess($request->user(), 'contrats.download')) {
+        abort(403, 'Permission refusée');
     }
+
+    $contrat = Contrat::with('employe')->find($id);
+
+    if (!$contrat || !$contrat->employe) {
+        abort(404, 'Contrat ou employé non trouvé');
+    }
+
+    return $this->pdfGeneratorService->downloadContrat($contrat);
+}
 
     /**
      * Impression du contrat (admin et RH seulement).
-     * Retourne le PDF en inline pour l'impression.
      */
     public function imprimer(int $id, Request $request): BinaryFileResponse|JsonResponse
     {
         try {
-            // Vérifier la permission contrats.print
             if (!$this->parametreService->canAccess($request->user(), 'contrats.print')) {
                 return response()->json([
                     'success' => false,
@@ -332,7 +288,7 @@ class ContratController extends Controller
                 ], 403);
             }
 
-            $contrat = Contrat::find($id);
+            $contrat = Contrat::with('employe')->find($id);
 
             if (!$contrat) {
                 return response()->json([
@@ -341,32 +297,20 @@ class ContratController extends Controller
                 ], 404);
             }
 
-            // Vérifier si un PDF existe déjà
-            $pdfPath = 'contrats/contrat_' . $contrat->id . '_' . $contrat->employe->nom . '.pdf';
-
-            if (!Storage::disk('public')->exists($pdfPath)) {
-                // Générer le PDF s'il n'existe pas
-                $pdfPath = $this->contratService->genererPDFContrat($contrat);
-            }
-
-            $fullPath = $this->contratService->telechargerPDF($pdfPath);
-
-            if (!$fullPath) {
+            if (!$contrat->employe) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'PDF non trouvé',
+                    'message' => 'Employé associé au contrat non trouvé',
                 ], 404);
             }
 
-            return response()->file($fullPath, [
-                'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="contrat_' . $contrat->id . '.pdf"',
-            ]);
+            return $this->pdfGeneratorService->downloadContrat($contrat);
+            
         } catch (\Exception $e) {
             Log::error('Erreur impression contrat: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Une erreur est survenue',
+                'message' => 'Une erreur est survenue: ' . $e->getMessage(),
             ], 500);
         }
     }

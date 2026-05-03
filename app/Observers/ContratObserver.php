@@ -21,9 +21,13 @@ class ContratObserver
     {
         $this->activityLogService->log(
             'create',
-            'contrat',
-            null,
-            $contrat->toArray()
+            'contrats',
+            "Contrat créé pour l'employé #{$contrat->user_id} de type {$contrat->type}",
+            $contrat->id,
+            'Contrat',
+            null,  // oldValues
+            null,  // newValues
+            null   // userName (optionnel)
         );
     }
 
@@ -34,9 +38,13 @@ class ContratObserver
     {
         $this->activityLogService->log(
             'update',
-            'contrat',
-            $contrat->getOriginal(),
-            $contrat->toArray()
+            'contrats',
+            "Contrat #{$contrat->id} modifié",
+            $contrat->id,
+            'Contrat',
+            null,  // oldValues
+            null,  // newValues
+            null   // userName
         );
     }
 
@@ -47,9 +55,13 @@ class ContratObserver
     {
         $this->activityLogService->log(
             'delete',
-            'contrat',
-            $contrat->toArray(),
-            null
+            'contrats',
+            "Contrat #{$contrat->id} supprimé",
+            $contrat->id,
+            'Contrat',
+            null,  // oldValues
+            null,  // newValues
+            null   // userName
         );
     }
 
@@ -60,9 +72,13 @@ class ContratObserver
     {
         $this->activityLogService->log(
             'restore',
-            'contrat',
-            null,
-            $contrat->toArray()
+            'contrats',
+            "Contrat #{$contrat->id} restauré",
+            $contrat->id,
+            'Contrat',
+            null,  // oldValues
+            null,  // newValues
+            null   // userName
         );
     }
 }

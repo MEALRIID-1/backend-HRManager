@@ -29,7 +29,7 @@ class CongeController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        try {
+        // try {
             // Filtres supportés: ?search=, ?statut=, ?type=, ?date_debut=, ?date_fin=, ?employe_id=, ?per_page=15
             $filters = $request->only(['statut', 'type', 'date_debut', 'date_fin', 'employe_id']);
             $perPage = $request->integer('per_page', 15);
@@ -49,13 +49,13 @@ class CongeController extends Controller
                     'to' => $conges->lastItem(),
                 ],
             ], 200);
-        } catch (\Exception $e) {
-            Log::error('Erreur liste congés: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Une erreur est survenue',
-            ], 500);
-        }
+        // } catch (\Exception $e) {
+        //     Log::error('Erreur liste congés: ' . $e->getMessage());
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => 'Une erreur est survenue',
+        //     ], 500);
+        // }
     }
 
     /**
@@ -85,34 +85,6 @@ class CongeController extends Controller
             ], 422);
         } catch (\Exception $e) {
             Log::error('Erreur création congé: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Une erreur est survenue',
-            ], 500);
-        }
-    }
-
-    /**
-     * Afficher un congé avec historique de validations.
-     */
-    public function show(int $id): JsonResponse
-    {
-        try {
-            $conge = $this->congeService->getCongeWithDetails($id);
-
-            if (!$conge) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Demande de congé non trouvée',
-                ], 404);
-            }
-
-            return response()->json([
-                'success' => true,
-                'data' => new CongeResource($conge),
-            ], 200);
-        } catch (\Exception $e) {
-            Log::error('Erreur affichage congé: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Une erreur est survenue',
@@ -172,7 +144,7 @@ class CongeController extends Controller
      */
     public function destroy(int $id): JsonResponse
     {
-        try {
+        // try {
             $conge = Conge::find($id);
 
             if (!$conge) {
@@ -184,7 +156,7 @@ class CongeController extends Controller
 
             // Vérifier que c'est le propriétaire ou un admin/RH
             $user = auth()->user();
-            if ($conge->employe_id !== $user->id && !$user->roles->contains('nom', 'admin') && !$user->roles->contains('nom', 'RH')) {
+            if ($conge->employe_id !== $user->id && !$user->roles->contains('nom', 'Administrateur') && !$user->roles->contains('nom', 'rh')) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Accès non autorisé',
@@ -197,19 +169,20 @@ class CongeController extends Controller
                 'success' => true,
                 'message' => 'Demande de congé supprimée',
             ], 200);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur de validation',
-                'errors' => $e->errors(),
-            ], 422);
-        } catch (\Exception $e) {
-            Log::error('Erreur suppression congé: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Une erreur est survenue',
-            ], 500);
-        }
+        // } catch (ValidationException $e) {
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => 'Erreur de validation',
+        //         'errors' => $e->errors(),
+        //     ], 422);
+        // } 
+        // catch (\Exception $e) {
+        //     Log::error('Erreur suppression congé: ' . $e->getMessage());
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => 'Une erreur est survenue',
+        //     ], 500);
+        // }
     }
 
     /**
@@ -270,7 +243,7 @@ class CongeController extends Controller
      */
     public function valider(ValiderCongeRequest $request, int $id): JsonResponse
     {
-        try {
+        // try {
             $conge = Conge::find($id);
 
             if (!$conge) {
@@ -282,16 +255,21 @@ class CongeController extends Controller
 
             $validateur = $request->user();
 
-            // Vérifier si l'utilisateur peut valider
-            if (!$this->congeService->peutValider($validateur, $conge)) {
+            if (!$validateur || !$this->congeService->peutValider($validateur, $conge)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Vous n\'êtes pas autorisé à valider ce congé',
                 ], 403);
             }
 
-            // Déterminer le niveau de validation
             $niveau = $this->congeService->getNiveauValidation($validateur);
+
+            if (!$niveau) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Vous n\'êtes pas autorisé à valider ce congé',
+                ], 403);
+            }
 
             $this->congeService->valider(
                 $conge,
@@ -306,19 +284,19 @@ class CongeController extends Controller
                 'message' => 'Validation enregistrée avec succès',
                 'data' => new CongeResource($conge->fresh()),
             ], 200);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur de validation',
-                'errors' => $e->errors(),
-            ], 422);
-        } catch (\Exception $e) {
-            Log::error('Erreur validation congé: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Une erreur est survenue',
-            ], 500);
-        }
+        // } catch (ValidationException $e) {
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => 'Erreur de validation',
+        //         'errors' => $e->errors(),
+        //     ], 422);
+        // } catch (\Exception $e) {
+        //     Log::error('Erreur validation congé: ' . $e->getMessage());
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => 'Une erreur est survenue',
+        //     ], 500);
+        // }
     }
 
     /**

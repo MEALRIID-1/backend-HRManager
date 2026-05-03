@@ -20,7 +20,7 @@ class StoreCongeRequest extends FormRequest
     {
         return [
             'type' => ['required', 'string', 'max:50', 'in:conge_paye,conge_sans_solde,rtt,maladie,formation'],
-            'date_debut' => ['required', 'date', 'after_or_equal:today'],
+            'date_debut' => ['required', 'date'],
             'date_fin' => ['required', 'date', 'after_or_equal:date_debut'],
             'commentaire' => ['nullable', 'string', 'max:500'],
         ];
@@ -80,7 +80,7 @@ class StoreCongeRequest extends FormRequest
                             ->where('date_fin', '>=', $dateFin);
                     });
             })
-            ->whereNotIn('etat', ['refuse'])
+            ->whereNotIn('statut', ['refuse'])
             ->whereNull('deleted_at')
             ->exists();
     }

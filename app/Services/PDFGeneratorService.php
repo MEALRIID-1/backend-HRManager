@@ -31,12 +31,33 @@ class PDFGeneratorService
             // Charger les relations nécessaires
             $contrat->load(['employe']);
 
+            // ✅ Préparer les données pour la vue
+            $data = [
+                'entreprise' => [
+                    'nom' => 'HRManager',
+                    'adresse' => '123 Avenue des Technologies',
+                    'ville' => '75000 Douala-Cameroun',
+                    'siret' => '123 456 789 00012',
+                ],
+                'contrat' => [
+                    'type' => $contrat->type,
+                    'date_debut' => $contrat->date_debut,
+                    'date_fin' => $contrat->date_fin,
+                    'salaire_brut' => $contrat->salaire_brut,
+                ],
+                'employe' => [
+                    'nom' => $contrat->employe->nom,
+                    'prenom' => $contrat->employe->prenom,
+                    'email' => $contrat->employe->email ?? 'Non renseigné', 
+                    'departement' => $contrat->employe->departement,
+                    'iban' => $contrat->employe->iban ?? 'Non renseigné',
+                ],
+                'reference' => 'CT-' . $contrat->id . '-' . date('Ymd'),
+                'date_generation' => now()->format('d/m/Y à H:i'),
+            ];
+
             // Générer le PDF
-            $pdf = Pdf::loadView('pdf.contrat', [
-                'contrat' => $contrat,
-                'employe' => $contrat->employe,
-                'dateGeneration' => now()->format('d/m/Y'),
-            ]);
+            $pdf = Pdf::loadView('pdf.contrat', $data);
 
             // Configuration du PDF
             $pdf->setPaper('A4');
@@ -62,6 +83,60 @@ class PDFGeneratorService
             return Storage::disk('public')->url($path);
         } catch (\Exception $e) {
             Log::error('Erreur génération PDF contrat: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Télécharger directement le PDF du contrat
+     *
+     * @param Contrat $contrat
+     * @return \Illuminate\Http\Response
+     */
+    public function downloadContrat(Contrat $contrat)
+    {
+        try {
+            // Charger les relations nécessaires
+            $contrat->load(['employe']);
+
+            // ✅ Préparer les données pour la vue
+            $data = [
+                'entreprise' => [
+                    'nom' => 'HRManager',
+                    'adresse' => '123 Avenue des Technologies',
+                    'ville' => '75000 Douala-Cameroun',
+                    'siret' => '123 456 789 00012',
+                ],
+                'contrat' => [
+                    'type' => $contrat->type,
+                    'date_debut' => $contrat->date_debut,
+                    'date_fin' => $contrat->date_fin,
+                    'salaire_brut' => $contrat->salaire_brut,
+                ],
+                'employe' => [
+                    'nom' => $contrat->employe->nom,
+                    'prenom' => $contrat->employe->prenom,
+                    'email' => $contrat->employe->email ?? 'Non renseigné',
+                    'departement' => $contrat->employe->departement,
+                    'iban' => $contrat->employe->iban ?? 'Non renseigné'    ,
+                ],
+                'reference' => 'CT-' . $contrat->id . '-' . date('Ymd'),
+                'date_generation' => now()->format('d/m/Y à H:i'),
+            ];
+
+            $pdf = Pdf::loadView('pdf.contrat', $data);
+            $pdf->setPaper('A4');
+            $pdf->setOptions([
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => true,
+                'defaultFont' => 'Arial',
+            ]);
+
+            $filename = 'contrat_' . $contrat->employe->nom . '_' . $contrat->employe->prenom . '.pdf';
+
+            return $pdf->download($filename);
+        } catch (\Exception $e) {
+            Log::error('Erreur téléchargement PDF contrat: ' . $e->getMessage());
             throw $e;
         }
     }

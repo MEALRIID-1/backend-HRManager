@@ -36,6 +36,9 @@ class DatabaseSeeder extends Seeder
 
             // 6. Congés (à différents états)
             CongeSeeder::class,
+
+            // 7. Fiches de paie de démonstration
+            FichePaieSeeder::class,
         ]);
 
         $this->command->info('✅ Seeding HRManager terminé avec succès !');
