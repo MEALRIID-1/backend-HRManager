@@ -226,41 +226,48 @@ class EmployeService
         ])->find($id);
     }
 
-   public function list(array $filters = [], ?User $manager = null, int $perPage = 15): LengthAwarePaginator
-{
-    // ⚠️ IMPORTANT: Ne pas filtrer les soft deletes
-    $query = User::with(['roles']);
-    
-    // ✅ Ajouter un log pour déboguer
-    \Log::info('Liste employés - Nombre total avant filtres: ' . User::count());
-    
-    // Filtres
-    if (isset($filters['nom']) && !empty($filters['nom'])) {
-        $search = $filters['nom'];
-        $query->where(function($q) use ($search) {
-            $q->where('nom', 'like', "%{$search}%")
-              ->orWhere('prenom', 'like', "%{$search}%");
-        });
-    }
+    public function list(array $filters = [], ?User $manager = null, int $perPage = 15): LengthAwarePaginator
+    {
+        $query = User::with(['roles']);
 
-    if (isset($filters['departement']) && !empty($filters['departement'])) {
-        $query->where('departement', $filters['departement']);
-    }
+        $search = $filters['search'] ?? $filters['nom'] ?? null;
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nom', 'like', "%{$search}%")
+                    ->orWhere('prenom', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
 
-    if (isset($filters['is_active']) && $filters['is_active'] !== '') {
-        $query->where('is_active', $filters['is_active']);
-    }
+        if (!empty($filters['departement'])) {
+            $query->where('departement', $filters['departement']);
+        }
 
-    $result = $query->paginate($perPage);
-    
-    \Log::info('Liste employés - Résultat après filtres: ' . $result->total());
-    
-    return $result;
-}
+        if (!empty($filters['role'])) {
+            $query->whereHas('roles', function ($roleQuery) use ($filters) {
+                $roleQuery->where('slug', $filters['role']);
+            });
+        }
+
+        if (isset($filters['is_active']) && $filters['is_active'] !== '') {
+            $query->where('is_active', filter_var($filters['is_active'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? (bool) $filters['is_active']);
+        } elseif (isset($filters['statut']) && $filters['statut'] !== '') {
+            $query->where('is_active', $filters['statut'] === 'actif');
+        }
+
+        return $query
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->paginate($perPage);
+    }
 
     public function trashed(int $perPage = 15): LengthAwarePaginator
     {
-        return User::onlyTrashed()->with(['roles'])->paginate($perPage);
+        return User::onlyTrashed()
+            ->with(['roles'])
+            ->orderByDesc('deleted_at')
+            ->orderByDesc('id')
+            ->paginate($perPage);
     }
 
     public function calculerSoldeConges(User $user): array

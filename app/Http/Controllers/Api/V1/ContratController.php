@@ -262,7 +262,7 @@ class ContratController extends Controller
  */
 public function telecharger(int $id, Request $request)
 {
-    if (!$this->parametreService->canAccess($request->user(), 'contrats.download')) {
+    if (!$this->parametreService->canAccess($request->user(), 'contrats.telecharger')) {
         abort(403, 'Permission refusée');
     }
 
