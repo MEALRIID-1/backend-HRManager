@@ -50,8 +50,11 @@ class RoleSeeder extends Seeder
                 ];
 
                 foreach ($roles as $roleData) {
-                    Role::create($roleData);
-                    $this->command->info("✓ Rôle créé : {$roleData['name']} (N{$roleData['niveau_hierarchique']})");
+                    Role::updateOrCreate(
+                        ['slug' => $roleData['slug']],
+                        $roleData
+                    );
+                    $this->command->info("✓ Rôle créé/mis à jour : {$roleData['name']} (N{$roleData['niveau_hierarchique']})");
                 }
             });
         } catch (\Exception $e) {
