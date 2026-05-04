@@ -32,17 +32,21 @@ class ContratSeeder extends Seeder
                 ];
 
                 foreach ($employes as $employe) {
-                    // Créer 1-2 contrats par employé
+                    if ($employe->contrats()->exists()) {
+                        $this->command->info("⚠ Contrats déjà existants pour {$employe->prenom} {$employe->nom}, ignorés.");
+                        continue;
+                    }
+
                     $nbContrats = fake()->numberBetween(1, 2);
-                    
+
                     for ($i = 0; $i < $nbContrats; $i++) {
                         $type = fake()->randomElement($typesContrat);
                         $salaireMin = $salaires[$type][0];
                         $salaireMax = $salaires[$type][1];
-                        
+
                         $dateDebut = $employe->date_embauche->copy()->addMonths($i * 12);
                         $dateFin = in_array($type, ['CDI']) ? null : $dateDebut->copy()->addMonths(fake()->numberBetween(6, 24));
-                        
+
                         Contrat::factory()->create([
                             'user_id' => $employe->id,
                             'type' => $type,
@@ -52,7 +56,7 @@ class ContratSeeder extends Seeder
                             'statut' => $dateFin && $dateFin->isPast() ? 'termine' : 'actif',
                         ]);
                     }
-                    
+
                     $this->command->info("✓ Contrat(s) créé(s) pour : {$employe->prenom} {$employe->nom}");
                 }
 

@@ -15,7 +15,7 @@ class AdminUserSeeder extends Seeder
     {
         $adminRole = Role::where('slug', 'admin')->first();
 
-        $admin = User::firstOrCreate(
+        $admin = User::updateOrCreate(
             ['email' => 'admin@hrmanager.local'],
             [
                 'nom' => 'Administrateur',

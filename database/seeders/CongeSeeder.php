@@ -34,17 +34,21 @@ class CongeSeeder extends Seeder
                 ];
 
                 foreach ($employes as $employe) {
-                    // Créer 2-4 demandes de congés par employé
+                    if ($employe->conges()->exists()) {
+                        $this->command->info("⚠ Congés déjà existants pour {$employe->prenom} {$employe->nom}, ignorés.");
+                        continue;
+                    }
+
                     $nbConges = fake()->numberBetween(2, 4);
-                    
+
                     for ($i = 0; $i < $nbConges; $i++) {
                         $type = fake()->randomElement($typesConge);
                         $etat = fake()->randomElement($etats);
-                        
+
                         $dateDebut = fake()->dateTimeBetween('-6 months', '+3 months');
                         $duree = fake()->numberBetween(1, 15);
                         $dateFin = (clone $dateDebut)->modify("+{$duree} days");
-                        
+
                         $congeData = [
                             'user_id' => $employe->id,
                             'type' => $type,
@@ -59,26 +63,25 @@ class CongeSeeder extends Seeder
                             },
                             'commentaire' => fake()->optional(0.7)->sentence(),
                         ];
-                        
-                        // Ajouter motif dans commentaire si refusé
+
                         if ($etat === 'refuse') {
                             $congeData['motif'] = fake()->randomElement($motifsRefus);
                         }
-                        
+
                         Conge::factory()->create($congeData);
                     }
-                    
+
                     $this->command->info("✓ Congés créés pour : {$employe->prenom} {$employe->nom} ({$nbConges} demandes)");
                 }
 
                 // Créer quelques congés pour le manager test
                 $manager = User::where('email', 'manager@hrmanager.com')->first();
-                if ($manager) {
+                if ($manager && !$manager->conges()->exists()) {
                     for ($i = 0; $i < 3; $i++) {
                         $dateDebut = fake()->dateTimeBetween('-3 months', '+2 months');
                         $duree = fake()->numberBetween(2, 10);
                         $dateFin = (clone $dateDebut)->modify("+{$duree} days");
-                        
+
                         Conge::factory()->create([
                             'user_id' => $manager->id,
                             'type' => fake()->randomElement($typesConge),
